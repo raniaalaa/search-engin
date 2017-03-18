@@ -26,7 +26,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 public class SPIDER implements Runnable{
-    private static final String user_agent =
+    private static final String useragent =
             "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1";
     List<String> urlarray;
 
@@ -88,8 +88,10 @@ public class SPIDER implements Runnable{
                 if(str.contains("disallow:"))
                 {
                     arr=str.split(" ");
+                    if(arr.length<1)
+                        continue;
                     robot=url+arr[1];
-                    System.out.println(robot);
+                   // System.out.println(robot);
                     //insert in the DB
                     synchronized (this) {
                     Statement st = db.conn.createStatement();
@@ -145,9 +147,9 @@ public class SPIDER implements Runnable{
     }
     public void Crawl(String url) throws SQLException, IOException
     {
-        doc = Jsoup.connect(url).timeout(0).get();
+        doc = Jsoup.connect(url).timeout(0).userAgent(useragent).get();
         org.jsoup.select.Elements links=doc.select("a[href]");
-
+        int id=Integer.parseInt(Thread.currentThread().getName());
         boolean flag3=IsHTML(doc.html());
         synchronized (this)
         {
@@ -156,26 +158,28 @@ public class SPIDER implements Runnable{
             boolean flag1,flag2;
         for(Element e: links)
 
-        {   DoNotCrawl(e.attr("abs:href"));
+        {  String tmpurl=e.attr("abs:href");
+            DoNotCrawl(tmpurl);
             //System.out.println(e.attr("abs:href"));
             synchronized (this)
             {
-             flag1=db.Check_Exist(e.attr("abs:href"));
+             flag1=db.Check_Exist(tmpurl);
             }
-             flag2=CheckRobotDisallow(e.attr("abs:href"));
+             flag2=CheckRobotDisallow(tmpurl);
 
             if(flag1&flag2&flag3)
             { synchronized (this) {
-                db.Insert(e.attr("abs:href"), "");
+                db.Insert(tmpurl, "");
             }
             }
-            else System.out.print("link exist in db ");
+         //   else System.out.print(" thread number" +id+" link exist in db ");
 
-            synchronized (this)
-            {
-            db.UpdateDoc(url,doc.text());
+
+        }
+        synchronized (this)
+        {
+            db.UpdateDoc(url,doc.html());
             db.Updatefile(url);
-            }
         }
         //	}
 
@@ -184,12 +188,12 @@ public class SPIDER implements Runnable{
     @Override
     public void run() {
         // TODO Auto-generated method stub
-        System.out.print("run ");
+       // System.out.print("run ");
         String url="";
 
         int id=Integer.parseInt(Thread.currentThread().getName());
         url=urlarray.get(Integer.parseInt(Thread.currentThread().getName()));
-        try {System.out.print("try");
+        try {//System.out.print("try");
         int count=0;
             while(count<10){
                 Statement st=db.conn.createStatement();

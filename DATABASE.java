@@ -13,8 +13,11 @@ import java.sql.SQLException;
 import java.sql.ResultSet;
 import java.io.*;
 import java.sql.Statement;
+import java.io.File;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 
 public class DATABASE {
     public Connection conn = null;
@@ -96,12 +99,34 @@ public class DATABASE {
 
         }*/
        try{
+            int id=Getid(url);
+           String filename=id+".txt";
+           File myfile = new File(filename);
+           FileWriter writer = new FileWriter(myfile, true);
+           writer.write(text);
+
+        //   FileWriter writer = new FileWriter(textname, true);
+          // writer.write(text);
+           //writer.flush();
+           writer.close();
            // BufferedWriter writer
             //FileWriter fw
-            PrintWriter writer = new PrintWriter("'"+url+"'"+".html", "UTF-8");
+         /*  File file = new File("'"+url+"'"+".html");
+
+           // creates the file
+           file.createNewFile();
+
+           // creates a FileWriter Object
+           FileWriter writer = new FileWriter(file);
+
+           // Writes the content to the file
+           writer.write(text);
+           writer.flush();
+           writer.close();
+           /* PrintWriter writer = new PrintWriter("'"+url+"'"+".html", "UTF-8");
             writer.print(text);
             writer.println("The second line");
-            writer.close();
+            writer.close();*/
         } catch (IOException e) {
             // do something
         }
@@ -113,6 +138,7 @@ public class DATABASE {
 
         String sql="UPDATE record SET `file` = '1' WHERE `record`.`url` ='"+url+"'";
         Statement sta = conn.createStatement();
+        System.out.println("file updated");
         sta.execute(sql);
     }
 
@@ -124,14 +150,21 @@ public class DATABASE {
         int value=0;
         if (rs.next()) {
             value= Integer.parseInt(rs.getString(1));
-            System.out.println(value);}
+           // System.out.println(value);
+            }
             return value;
     }
-    public ResultSet Getid(String url) throws SQLException {
+    public int Getid(String url) throws SQLException {
 
         String sql="SELECT id FROM `record` WHERE url='"+url+"'";
         Statement sta = conn.createStatement();
-        return sta.executeQuery(sql);
+        ResultSet rs = sta.executeQuery(sql);
+        int value=0;
+        if (rs.next()) {
+            value= Integer.parseInt(rs.getString(1));
+            int id=Integer.parseInt(Thread.currentThread().getName());
+            System.out.println("thread num"+id +" "+value);}
+        return value;
     }
     public String GetURL(int n,int ind) throws SQLException {
 
@@ -148,7 +181,9 @@ public class DATABASE {
           //  for (int i = ind-1; i < columnsNumber; i++)
             if(count==ind)
             {    value = resultSet.getString(1);
-                System.out.println(value);
+                int id=Integer.parseInt(Thread.currentThread().getName());
+               // int c=Getid(value);
+               // System.out.println("thread num"+ id+" is taking url num "+c+" title: "+ value);
                 break;
             }
             count++;
