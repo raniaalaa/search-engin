@@ -1,3 +1,5 @@
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 import org.jsoup.Jsoup;
@@ -33,6 +35,11 @@ public static Connection Connect() throws ClassNotFoundException, SQLException
 	Connection con = (Connection) DriverManager.getConnection("jdbc:mysql://localhost:3306/SearchEngine?autoReconnect=true&useSSL=false","root","");
 	return con; 
 }
+public static void InsertInExpressions(Connection con,String Expression) throws ClassNotFoundException, SQLException
+{
+	PreparedStatement  statement = con.prepareStatement("insert into `Expressions` (`Expression`,`E_ID`) values('"+Expression+"',NULL)");
+	statement.execute();
+}
 public static void InsertInIndexer(Connection con,String Word,long Sword) throws ClassNotFoundException, SQLException
 {
 	PreparedStatement statement;
@@ -44,6 +51,7 @@ public static void InsertInIndexer(Connection con,String Word,long Sword) throws
 }
 public static int Importance(String title,String word,String header) 
 {
+	//azwed 3liha bta3t l img
 	 if ( title.toLowerCase().indexOf(word.toLowerCase()) != -1 )
 	   return 3;
 	 
@@ -60,7 +68,15 @@ public static void InsertInWordPositions(Connection con,long w_id,int doc_id,int
 	statement = con.prepareStatement("insert into `wordpositions` (`w_id`,`doc_id`,`position`,`importance`) values("+w_id+","+doc_id+","+position+","+importance+")");
 	statement.execute();
 }
-public static Boolean CheckExistance(Connection con,String Word) throws Exception
+public static void InsertInExpressionsPositions(Connection con,long expression_id,int doc_id,int start_position,int end_position) throws SQLException 
+{
+	
+	PreparedStatement statement;
+	statement = con.prepareStatement("insert into `expressionspositions` (`Expression_id`,`Doc_id`,`Start_pos`,`End_pos`) values("+expression_id+","+doc_id+","+start_position+","+end_position+")");
+	statement.execute();
+}
+//Check exitance in word table
+public static Boolean CheckWordExistance(Connection con,String Word) throws Exception
 {
 	String queryCheck = "SELECT * from `Word` WHERE word = '"+Word+"'";
 	PreparedStatement statement = con.prepareStatement(queryCheck);
@@ -68,7 +84,16 @@ public static Boolean CheckExistance(Connection con,String Word) throws Exceptio
     return (resultSet.next());
     	
 }
-public static long GetID(Connection con,String Word) throws Exception
+//Check exitance in expression table
+public static Boolean CheckExpressionExistance(Connection con,String Expression) throws Exception
+{
+	String queryCheck = "SELECT * from `Expressions` WHERE word = '"+Expression+"'";
+	PreparedStatement statement = con.prepareStatement(queryCheck);
+    ResultSet resultSet = statement.executeQuery();
+    return (resultSet.next());
+    	
+}
+public static long GetWordID(Connection con,String Word) throws Exception
 {
 	String queryCheck = "SELECT Wid from `Word` WHERE word = '"+Word+"'";
 	PreparedStatement statement = con.prepareStatement(queryCheck);
@@ -79,27 +104,48 @@ public static long GetID(Connection con,String Word) throws Exception
     else
     	return -1;
 }
+public static String GetText(Connection con,int doc_id) throws Exception
+{
+	String queryCheck = "SELECT document from `record` WHERE ID = '"+doc_id+"'";
+	PreparedStatement statement = con.prepareStatement(queryCheck);
+    ResultSet result = statement.executeQuery();
+  
+    if(result.next())
+    	return (result.getString("document"));
+    else
+    	return "";
+}
+public static long GetExpressionID(Connection con,String Expression) throws Exception
+{
+	String queryCheck = "SELECT Expression_id from `Expressions` WHERE Expression = '"+Expression+"'";
+	PreparedStatement statement = con.prepareStatement(queryCheck);
+    ResultSet result = statement.executeQuery();
+  
+    if(result.next())
+    	return (result.getLong("Expression_id"));
+    else
+    	return -1;
+}
 public static String Stemmer(String word)
 {
 	 porterStemmer ps=new porterStemmer();
 		return ps.stemTerm(word); 
 }
- public static String Handling_Stop_Words(Connection con,String txt) throws Exception
- {   int pos=0,count=0;
+ public static void Handling_Stop_Words(Connection con,String txt,int doc_id) throws Exception
+ {   int pos=0;
+     int start_pos=0;
+     int end_pos=0;
 	 String Expression = "";
 	 String[] parts =txt.split("\\s+|(?=\\p{Punct})|(?<=\\p{Punct})");
 		while(pos<parts.length)
 			{
-			
-			//System.out.println(parts[pos]);
-			//Boolean 
 			String Phrase="";
 			Expression = "";
 			String First_Stop_Word="";
 			if (pos<parts.length&&stopwords.contains(parts[pos]))
 					{
-
 				First_Stop_Word=parts[pos];	
+				start_pos=pos;
 				pos++;
 					}
 		while (pos<parts.length&&stopwords.contains(parts[pos]))
@@ -108,109 +154,79 @@ public static String Stemmer(String word)
 			pos++;
 			}
 		if(Phrase.length()>1)
-		{   count++;
+		{  
 			Expression=First_Stop_Word+Phrase;
-			if(!CheckExistance(con,Expression))
+			end_pos=start_pos+Expression.length();
+			if(!CheckExpressionExistance(con,Expression))
 			{
-					InsertInIndexer(con,Expression,-1);
+					InsertInExpressions(con,Expression);
+					long EID=GetExpressionID(con,Expression);
+					InsertInExpressionsPositions(con,EID,doc_id,start_pos,end_pos);
 			}
 		}
 		else 
 			Phrase="";
 		pos++;
 		}
-		//System.out.println("countttttt"+count);
-	 return txt;
  }
- //function to check importance
 
- public static void Run(int doc_id) throws Exception
+
+ public static void Run(String txt,int doc_id,String Title,String All_Headers) throws Exception
  {
 	 int pos=0;
 //////////////////////////////////////parse html file /////////////////////////////////
-	 
-		 //http://www.quackit.com/html
-	   String url="http://stackoverflow.com/";
-		Document doc=Jsoup.connect(url).timeout(6000).get();
-		String txt=doc.text();
-		String Title = doc.title();
-		
-	   String tag="h";
-	   String All_Headers="";
-	   Elements Header;
-	   for(int i=1;i<20;i++)
-		{  
-		   tag="h"+String.valueOf(i);
-		   Header = doc.select(tag);
-		   System.out.println("size  "+Header.size());
-		if(Header.size()>0)
-			{
-		Header= doc.getElementsByTag(tag);
-		String pConcatenated="";
-		        for (Element x: Header) {
-		            pConcatenated+= x.text()+" ";
-		            System.out.println("hedeeeeeeeeeeeeeer----------->"+x.text()+" ");
-		        }
-		        All_Headers=All_Headers+pConcatenated;
-			}
-		else
-			break;
-		
-		}
-	 //String txt="computing Computer send  Java toString() Method Jobs  SENDFiles  Whiteboard  Net Meeting Tools  Articles Facebook Google+ Twitter Linkedin YouTube Home Tutorials Library Coding Ground Tutor Connect Videos Search Java Tutorial Java - Home Java - Overview Java - Environment Setup Java - Basic Syntax Java - Object & Classes Java - Basic Datatypes Java - Variable Types Java - Modifier Types Java - Basic Operators Java - Loop Control Java - Decision Making Java - Numbers Java - Characters Java - Strings Java - Arrays Java - Date & Time Java - Regular Expressions Java - Methods Java - Files and I/O Java - Exceptions Java - Inner classes Java Object Oriented Java - Inheritance Java - Overriding Java - Polymorphism Java - Abstraction Java - Encapsulation Java - Interfaces Java - Packages Java Advanced Java - Data Structures Java - Collections Java - Generics Java - Serialization Java - Networking Java - Sending Email Java - Multithreading Java - Applet Basics Java - Documentation Java Useful Resources Java - Questions and Answers Java - Quick Guide Java - Useful Resources Java - Discussion Java - Examples Selected Reading Developer's Best Practices Questions and Answers Effective Resume Writing HR Interview Questions Computer Glossary Who is Who Java - toString() Method Advertisements Previous Page Next Page   Description The method is used to get a String object representing the value of the Number Object. If the method takes a primitive data type as an argument, then the String object representing the primitive data type value is returned. If the method takes two arguments, then a String representation of the first argument in the radix specified by the second argument will be returned. Syntax Following are all the variants of this method ? String toString()";
-	
-		///////////////////////////////////////////////////////////////////////////////////////
-		Connection con=Connect();
-		txt=Handling_Stop_Words(con,txt);
+	    Connection con=Connect();
+		 
+		Handling_Stop_Words(con,txt,doc_id);
 		String w,sw,w1;
 		long WID;
 		for (String word: txt.split("\\P{Alpha}+")) 
 		{
 			w=word.toLowerCase();
+			pos++;
 			if(stopwords.contains(w))
 				continue;
-			else 
-				pos++;
+			
 			//stemming
 			w1=w;
 			sw=Stemmer(w1);
-			if(CheckExistance(con,w))
+			if(CheckWordExistance(con,w))
 			{
-			WID=GetID(con,w);
+			WID=GetWordID(con,w);
 			}
 			int important;
-			if(!w.equals(sw)&&!CheckExistance(con,w)&&!CheckExistance(con,sw))
+			if(!w.equals(sw)&&!CheckWordExistance(con,w)&&!CheckWordExistance(con,sw))
 			{
 				if(!sw.equals(""))
 				{
 					//count++;
 					InsertInIndexer(con,sw,-1);
-					long ID=GetID(con,sw);
+					long ID=GetWordID(con,sw);
 					//get doc_id hagibha mn l main
 					important=Importance(Title,sw,All_Headers);
 					InsertInWordPositions(con,ID,doc_id,pos,important);
 					
 					InsertInIndexer(con,w,ID);
-					WID=GetID(con,w);
+					WID=GetWordID(con,w);
 					important=Importance(Title,w,All_Headers);
 					InsertInWordPositions(con,WID,doc_id,pos,important);	
 				}
 			}
-			else if(!w.equals(sw)&&CheckExistance(con,sw)&&!CheckExistance(con,w))
+			else if(!w.equals(sw)&&CheckWordExistance(con,sw)&&!CheckWordExistance(con,w))
 			{
-				long ID=GetID(con,sw);	
+				long ID=GetWordID(con,sw);	
 				InsertInIndexer(con,w,ID);
-				WID=GetID(con,w);
+				WID=GetWordID(con,w);
 				important=Importance(Title,w,All_Headers);
 				InsertInWordPositions(con,WID,doc_id,pos,important);
 			
 			}
-			else if(w.equals(sw)&&!CheckExistance(con,sw)&&!CheckExistance(con,w))
+			else if(w.equals(sw)&&!CheckWordExistance(con,sw)&&!CheckWordExistance(con,w))
 			{
 				if(!sw.equals(""))
 					{InsertInIndexer(con,sw,-1);
 					important=Importance(Title,w,All_Headers);
-					WID=GetID(con,sw);
+					WID=GetWordID(con,sw);
 					InsertInWordPositions(con,WID,doc_id,pos,important);
 					}
 				
