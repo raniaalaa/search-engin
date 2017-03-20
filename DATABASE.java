@@ -8,24 +8,23 @@ import java.net.URL;
 import java.sql.Connection;
 import java.sql.ResultSetMetaData;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.ResultSet;
 import java.io.*;
 import java.sql.Statement;
-import java.io.File;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 
 public class DATABASE {
-    public Connection conn = null;
+    public static Connection conn = null;
     public DATABASE() {
         try {
             Class.forName("com.mysql.jdbc.Driver");
             String url = "jdbc:mysql://localhost:3306/Search Engine";
-            conn = DriverManager.getConnection(url, "root", "");
+           // conn = DriverManager.getConnection(url, "root", "");
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/SearchEngine?autoReconnect=true&useSSL=false","root","");
             System.out.println("conn built");
         } catch (SQLException e) {
             e.printStackTrace();
@@ -99,34 +98,12 @@ public class DATABASE {
 
         }*/
        try{
-            int id=Getid(url);
-           String filename=id+".txt";
-           File myfile = new File(filename);
-           FileWriter writer = new FileWriter(myfile, true);
-           writer.write(text);
-
-        //   FileWriter writer = new FileWriter(textname, true);
-          // writer.write(text);
-           //writer.flush();
-           writer.close();
            // BufferedWriter writer
             //FileWriter fw
-         /*  File file = new File("'"+url+"'"+".html");
-
-           // creates the file
-           file.createNewFile();
-
-           // creates a FileWriter Object
-           FileWriter writer = new FileWriter(file);
-
-           // Writes the content to the file
-           writer.write(text);
-           writer.flush();
-           writer.close();
-           /* PrintWriter writer = new PrintWriter("'"+url+"'"+".html", "UTF-8");
+            PrintWriter writer = new PrintWriter("'"+url+"'"+".html", "UTF-8");
             writer.print(text);
             writer.println("The second line");
-            writer.close();*/
+            writer.close();
         } catch (IOException e) {
             // do something
         }
@@ -138,7 +115,6 @@ public class DATABASE {
 
         String sql="UPDATE record SET `file` = '1' WHERE `record`.`url` ='"+url+"'";
         Statement sta = conn.createStatement();
-        System.out.println("file updated");
         sta.execute(sql);
     }
 
@@ -150,21 +126,14 @@ public class DATABASE {
         int value=0;
         if (rs.next()) {
             value= Integer.parseInt(rs.getString(1));
-           // System.out.println(value);
-            }
+            System.out.println(value);}
             return value;
     }
-    public int Getid(String url) throws SQLException {
+    public ResultSet Getid(String url) throws SQLException {
 
         String sql="SELECT id FROM `record` WHERE url='"+url+"'";
         Statement sta = conn.createStatement();
-        ResultSet rs = sta.executeQuery(sql);
-        int value=0;
-        if (rs.next()) {
-            value= Integer.parseInt(rs.getString(1));
-            int id=Integer.parseInt(Thread.currentThread().getName());
-            System.out.println("thread num"+id +" "+value);}
-        return value;
+        return sta.executeQuery(sql);
     }
     public String GetURL(int n,int ind) throws SQLException {
 
@@ -181,9 +150,7 @@ public class DATABASE {
           //  for (int i = ind-1; i < columnsNumber; i++)
             if(count==ind)
             {    value = resultSet.getString(1);
-                int id=Integer.parseInt(Thread.currentThread().getName());
-               // int c=Getid(value);
-               // System.out.println("thread num"+ id+" is taking url num "+c+" title: "+ value);
+                System.out.println(value);
                 break;
             }
             count++;
@@ -203,6 +170,88 @@ public class DATABASE {
             conn.close();
         }
     }
+    
+   /////////////functions of indexer////////////////////////////////////////////////////////
+    public static void InsertInExpressions(String Expression) throws ClassNotFoundException, SQLException
+    {
+    	PreparedStatement  statement = conn.prepareStatement("insert into `Expressions` (`Expression`,`E_ID`) values('"+Expression+"',NULL)");
+    	statement.execute();
+    }
+    public static void InsertInIndexer(String Word,long Sword) throws ClassNotFoundException, SQLException
+    {
+    	PreparedStatement statement;
+    	if(Sword==-1)
+    		statement = conn.prepareStatement("insert into `Word` (`word`,`Wid`,`Stemming`) values('"+Word+"',NULL,NULL)");
+    	else
+    		statement = conn.prepareStatement("insert into `Word` (`word`,`Wid`,`Stemming`) values('"+Word+"',NULL,"+Sword+")");
+    	statement.execute();
+    }
+    public static void InsertInWordPositions(long w_id,int doc_id,int position,int importance) throws SQLException 
+    {
+    	//importance=3 if title,=2 if header,=1 else
+    	PreparedStatement statement;
+    	statement = conn.prepareStatement("insert into `wordpositions` (`w_id`,`doc_id`,`position`,`importance`) values("+w_id+","+doc_id+","+position+","+importance+")");
+    	statement.execute();
+    }
+    public static void InsertInExpressionsPositions(long expression_id,int doc_id,int start_position,int end_position) throws SQLException 
+    {
+    	
+    	PreparedStatement statement;
+    	statement = conn.prepareStatement("insert into `expressionspositions` (`Expression_id`,`Doc_id`,`Start_pos`,`End_pos`) values("+expression_id+","+doc_id+","+start_position+","+end_position+")");
+    	statement.execute();
+    }
+    //Check exitance in word table
+    public static Boolean CheckWordExistance(String Word) throws Exception
+    {
+    	String queryCheck = "SELECT * from `Word` WHERE word = '"+Word+"'";
+    	PreparedStatement statement = conn.prepareStatement(queryCheck);
+        ResultSet resultSet = statement.executeQuery();
+        return (resultSet.next());
+        	
+    }
+    //Check exitance in expression table
+    public static Boolean CheckExpressionExistance(String Expression) throws Exception
+    {
+    	String queryCheck = "SELECT * from `Expressions` WHERE word = '"+Expression+"'";
+    	PreparedStatement statement = conn.prepareStatement(queryCheck);
+        ResultSet resultSet = statement.executeQuery();
+        return (resultSet.next());
+        	
+    }
+    public static long GetWordID(String Word) throws Exception
+    {
+    	String queryCheck = "SELECT Wid from `Word` WHERE word = '"+Word+"'";
+    	PreparedStatement statement = conn.prepareStatement(queryCheck);
+        ResultSet result = statement.executeQuery();
+      
+        if(result.next())
+        	return (result.getLong("Wid"));
+        else
+        	return -1;
+    }
+    public static String GetText(int doc_id) throws Exception
+    {
+    	String queryCheck = "SELECT document from `record` WHERE ID = '"+doc_id+"'";
+    	PreparedStatement statement = conn.prepareStatement(queryCheck);
+        ResultSet result = statement.executeQuery();
+      
+        if(result.next())
+        	return (result.getString("document"));
+        else
+        	return "";
+    }
+    public static long GetExpressionID(String Expression) throws Exception
+    {
+    	String queryCheck = "SELECT Expression_id from `Expressions` WHERE Expression = '"+Expression+"'";
+    	PreparedStatement statement = conn.prepareStatement(queryCheck);
+        ResultSet result = statement.executeQuery();
+      
+        if(result.next())
+        	return (result.getLong("Expression_id"));
+        else
+        	return -1;
+    }
+    
    /* public  void DoNotCrawl(String url) throws SQLException, IOException
     {//Connection conn1 = null;
         String str,robot,temp;
