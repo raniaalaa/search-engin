@@ -103,7 +103,7 @@ public static String Stemmer(String word)
  }
 
 
- public static void Run(String txt,int doc_id,String Title,String All_Headers,String img) throws Exception
+ public static void Run(String txt,int doc_id,String [] Importants) throws Exception
  {
 	 int pos=0;
 //////////////////////////////////////parse html file /////////////////////////////////
@@ -133,12 +133,12 @@ public static String Stemmer(String word)
 					db.InsertInIndexer(sw,-1);
 					long ID=db.GetWordID(sw);
 					//get doc_id hagibha mn l main
-					important=Importance(Title,sw,All_Headers,img);
+					important=Importance(Importants[0],sw,Importants[1],Importants[2]);
 					db.InsertInWordPositions(ID,doc_id,pos,important);
 					
 					db.InsertInIndexer(w,ID);
 					WID=db.GetWordID(w);
-					important=Importance(Title,w,All_Headers,img);
+					important=Importance(Importants[0],w,Importants[1],Importants[2]);
 					db.InsertInWordPositions(WID,doc_id,pos,important);	
 				}
 			}
@@ -147,7 +147,7 @@ public static String Stemmer(String word)
 				long ID=db.GetWordID(sw);	
 				db.InsertInIndexer(w,ID);
 				WID=db.GetWordID(w);
-				important=Importance(Title,w,All_Headers,img);
+				important=Importance(Importants[0],w,Importants[1],Importants[2]);
 				db.InsertInWordPositions(WID,doc_id,pos,important);
 			
 			}
@@ -156,7 +156,7 @@ public static String Stemmer(String word)
 				if(!sw.equals(""))
 					{
 					db.InsertInIndexer(sw,-1);
-					important=Importance(Title,w,All_Headers,img);
+					important=Importance(Importants[0],w,Importants[1],Importants[2]);
 					WID=db.GetWordID(sw);
 					db.InsertInWordPositions(WID,doc_id,pos,important);
 					}

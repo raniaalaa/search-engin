@@ -40,18 +40,17 @@ public class Filer {
 		Elements img = doc.getElementsByTag("img");
 		
         // Loop through img tags
-        for (Element el : img) {
-            // If alt is empty or null, add one to counter
-            if(el.attr("alt") != null && !(el.attr("alt").equals(""))) {
-            	Importants[2]=Importants[2]+" "+el.attr("alt");                
-            }
-           // System.out.println("image tag: " + el.attr("src") + " Alt: " + el.attr("alt"));
-        }
+     
 		for (Element element :Head) 
 		{
-			Text=Text+" "+element.text(); //da l mafrod yrg3 l 7aga elly fe l head
-			System.out.println("head  "+element.text());
+			Text=Text+" "+element.text(); 
 		}
+		   for (Element element : img) {
+	            if(element.attr("alt") != null && !(element.attr("alt").equals(""))) {
+	            	Text=Text+" "+element.attr("alt");
+	            	Importants[2]=Importants[2]+" "+element.attr("alt");
+	            }
+	        }
 		Elements Body = doc.body().select("*");
 		for (Element element :Body) 
 		{//ageeb l tags
@@ -62,7 +61,6 @@ public class Filer {
 				{  
 				   tag="h"+String.valueOf(i);
 				   Header = doc.select(tag);
-				  // System.out.println("size  "+Header.size());
 				if(Header.size()>0)
 					{
 				Header= doc.getElementsByTag(tag);
@@ -77,7 +75,7 @@ public class Filer {
 				
 				}
 			   Importants[1]=All_Headers;
-			   Text=Text+" "+element.text();  //da l mafrod yrg3 l 7aga elly fe l body
+			   Text=Text+" "+element.text();
 		}
        return Importants;
 	}

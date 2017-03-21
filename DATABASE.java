@@ -197,7 +197,7 @@ public class DATABASE {
     {
     	
     	PreparedStatement statement;
-    	statement = conn.prepareStatement("insert into `expressionspositions` (`Expression_id`,`Doc_id`,`Start_pos`,`End_pos`) values("+expression_id+","+doc_id+","+start_position+","+end_position+")");
+    	statement = conn.prepareStatement("insert into `expressionspositions` (`expression_id`,`doc_id`,`start_pos`,`end_pos`) values("+expression_id+","+doc_id+","+start_position+","+end_position+")");
     	statement.execute();
     }
     //Check exitance in word table
@@ -212,7 +212,7 @@ public class DATABASE {
     //Check exitance in expression table
     public static Boolean CheckExpressionExistance(String Expression) throws Exception
     {
-    	String queryCheck = "SELECT * from `Expressions` WHERE word = '"+Expression+"'";
+    	String queryCheck = "SELECT * from `Expressions` WHERE Expression = '"+Expression+"'";
     	PreparedStatement statement = conn.prepareStatement(queryCheck);
         ResultSet resultSet = statement.executeQuery();
         return (resultSet.next());
@@ -242,12 +242,12 @@ public class DATABASE {
     }
     public static long GetExpressionID(String Expression) throws Exception
     {
-    	String queryCheck = "SELECT Expression_id from `Expressions` WHERE Expression = '"+Expression+"'";
+    	String queryCheck = "SELECT E_ID from `Expressions` WHERE Expression = '"+Expression+"'";
     	PreparedStatement statement = conn.prepareStatement(queryCheck);
         ResultSet result = statement.executeQuery();
       
         if(result.next())
-        	return (result.getLong("Expression_id"));
+        	return (result.getLong("E_ID"));
         else
         	return -1;
     }
