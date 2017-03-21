@@ -16,7 +16,7 @@ public class MAIN {
  * ALTER TABLE `record` AUTO_INCREMENT = 1;
  * INSERT INTO `record`(`ID`, `URL`, `document`, `Visted`, `file`) VALUES ('NULL','http://www.quackit.com/html','NULL','0','0');
  */
-      Scanner reader = new Scanner(System.in);  // Reading from System.in
+      /*Scanner reader = new Scanner(System.in);  // Reading from System.in
        System.out.println("Enter the number of threads between 1 and 10: ");
         int size=0; ;
         while(true)
@@ -37,7 +37,7 @@ public class MAIN {
         }
         reader.close(); 
         for (int j = 0; j < size; j++)
-            myThreads[j].join();
+            myThreads[j].join();*/
 
         INDEXER I=new INDEXER();
         File input = new File("C:/Users/mennna/Documents/Indexer1");  // pages in folder "html" // 
@@ -52,11 +52,11 @@ public class MAIN {
              if(!st[i].getName().contains(".html"))
             	continue;
              String FileName=st[i].getName().replace(".html","");
-             int doc_id=Integer.parseInt(FileName);
+             long doc_id=Long.parseLong(FileName);
              Importance = filer.Dealing_Files(st[i]);
              ///////////////////////////edited///////////////////////////////////
              I.Run(Filer.GetText(),doc_id,Importance);
-            // System.out.println(Filer.GetText());
+            System.out.println(Filer.GetText());
           }
         }        
         }

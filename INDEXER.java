@@ -62,7 +62,7 @@ public static String Stemmer(String word)
 	 porterStemmer ps=new porterStemmer();
 		return ps.stemTerm(word); 
 }
- public static void Handling_Stop_Words(String txt,int doc_id) throws Exception
+ public static void Handling_Stop_Words(String txt,long doc_id) throws Exception
  {   int pos=0;
      int start_pos=0;
      int end_pos=0;
@@ -103,7 +103,7 @@ public static String Stemmer(String word)
  }
 
 
- public static void Run(String txt,int doc_id,String [] Importants) throws Exception
+ public static void Run(String txt,long doc_id,String [] Importants) throws Exception
  {
 	 int pos=0;
 //////////////////////////////////////parse html file /////////////////////////////////
