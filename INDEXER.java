@@ -31,16 +31,30 @@ static List<String> stopwords = Arrays.asList("a", "able", "about",
 
 INDEXER()
 {}
-public static int Importance(String title,String word,String header) 
+public static int Importance(String title,String word,String header,String img) 
 {
-	//azwed 3liha bta3t l img
-	 if ( title.toLowerCase().indexOf(word.toLowerCase()) != -1 )
-	   return 3;
-	 
-	 else if(header.toLowerCase().indexOf(word.toLowerCase()) != -1)
-		 return 2;
-	 
-	 else return 1;
+	for (String title_element: title.split("\\P{Alpha}+")) 
+	{
+		if(word.equals(title_element.toLowerCase()))
+		{
+			return 4;
+		}
+	}
+	for (String img_element: img.split("\\P{Alpha}+")) 
+	{
+		if(word.equals(img_element.toLowerCase()))
+		{
+			return 3;
+		}
+	}
+	for (String header_element: header.split("\\P{Alpha}+")) 
+	{
+		if(word.equals(header_element.toLowerCase()))
+		{
+			return 2;
+		}
+	}
+	return 1;
 	 
 }
 public static String Stemmer(String word)
@@ -73,7 +87,8 @@ public static String Stemmer(String word)
 		if(Phrase.length()>1)
 		{  
 			Expression=First_Stop_Word+Phrase;
-			end_pos=start_pos+Expression.length();
+			end_pos=pos;
+			//end_pos=start_pos+Expression.length(); /////////////////8alt
 			if(!db.CheckExpressionExistance(Expression))
 			{
 					db.InsertInExpressions(Expression);
@@ -88,7 +103,7 @@ public static String Stemmer(String word)
  }
 
 
- public static void Run(String txt,int doc_id,String Title,String All_Headers) throws Exception
+ public static void Run(String txt,int doc_id,String Title,String All_Headers,String img) throws Exception
  {
 	 int pos=0;
 //////////////////////////////////////parse html file /////////////////////////////////
@@ -118,12 +133,12 @@ public static String Stemmer(String word)
 					db.InsertInIndexer(sw,-1);
 					long ID=db.GetWordID(sw);
 					//get doc_id hagibha mn l main
-					important=Importance(Title,sw,All_Headers);
+					important=Importance(Title,sw,All_Headers,img);
 					db.InsertInWordPositions(ID,doc_id,pos,important);
 					
 					db.InsertInIndexer(w,ID);
 					WID=db.GetWordID(w);
-					important=Importance(Title,w,All_Headers);
+					important=Importance(Title,w,All_Headers,img);
 					db.InsertInWordPositions(WID,doc_id,pos,important);	
 				}
 			}
@@ -132,7 +147,7 @@ public static String Stemmer(String word)
 				long ID=db.GetWordID(sw);	
 				db.InsertInIndexer(w,ID);
 				WID=db.GetWordID(w);
-				important=Importance(Title,w,All_Headers);
+				important=Importance(Title,w,All_Headers,img);
 				db.InsertInWordPositions(WID,doc_id,pos,important);
 			
 			}
@@ -141,7 +156,7 @@ public static String Stemmer(String word)
 				if(!sw.equals(""))
 					{
 					db.InsertInIndexer(sw,-1);
-					important=Importance(Title,w,All_Headers);
+					important=Importance(Title,w,All_Headers,img);
 					WID=db.GetWordID(sw);
 					db.InsertInWordPositions(WID,doc_id,pos,important);
 					}

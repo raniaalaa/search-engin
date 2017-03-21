@@ -32,13 +32,25 @@ public class Filer {
     }
 	public static  String [] Dealing_Files(File f) throws IOException
 	{
-		String [] Importants={"",""}; //first element is the title,second is all headers
+		String [] Importants={"","",""}; //first element is the title,second is all headers
 		org.jsoup.nodes.Document doc=Jsoup.parse(f, "UTF-8");
 		Elements Head = doc.head().select("*");
+		Importants[0]=doc.title();
+		String imgRegex = "<img[^>]+src\\s*=\\s*['\"]([^'\"]+)['\"][^>]*>";
+		Elements img = doc.getElementsByTag("img");
+		
+        // Loop through img tags
+        for (Element el : img) {
+            // If alt is empty or null, add one to counter
+            if(el.attr("alt") != null && !(el.attr("alt").equals(""))) {
+            	Importants[2]=Importants[2]+" "+el.attr("alt");                
+            }
+           // System.out.println("image tag: " + el.attr("src") + " Alt: " + el.attr("alt"));
+        }
 		for (Element element :Head) 
 		{
-			Importants[0]=doc.title();
-			Text=Text+element.ownText(); //da l mafrod yrg3 l 7aga elly fe l head
+			Text=Text+" "+element.text(); //da l mafrod yrg3 l 7aga elly fe l head
+			System.out.println("head  "+element.text());
 		}
 		Elements Body = doc.body().select("*");
 		for (Element element :Body) 
@@ -65,7 +77,7 @@ public class Filer {
 				
 				}
 			   Importants[1]=All_Headers;
-			   Text=Text+element.ownText();  //da l mafrod yrg3 l 7aga elly fe l body
+			   Text=Text+" "+element.text();  //da l mafrod yrg3 l 7aga elly fe l body
 		}
        return Importants;
 	}
