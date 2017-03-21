@@ -3277,6 +3277,11 @@ ALTER TABLE `word`
 ALTER TABLE `wordpositions`
   ADD CONSTRAINT `wordpositions_ibfk_1` FOREIGN KEY (`doc_id`) REFERENCES `record` (`ID`),
   ADD CONSTRAINT `wordpositions_ibfk_2` FOREIGN KEY (`w_id`) REFERENCES `word` (`Wid`);
+  
+  
+  ALTER TABLE `expressionspositions`
+  ADD CONSTRAINT `expressionspositions_ibfk_1` FOREIGN KEY (`expression_id`) REFERENCES `expressions` (`E_ID`),
+  ADD CONSTRAINT `expressionspositions_ibfk_2` FOREIGN KEY (`doc_id`) REFERENCES `record` (`ID`);
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
