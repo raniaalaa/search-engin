@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.sql.ResultSet;
 import java.io.*;
 import java.sql.Statement;
+import java.util.List;
 import java.util.Scanner;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -43,14 +44,22 @@ public class DATABASE {
         Statement sta = conn.createStatement();
         return sta.execute(sql);
     }
-    public void Restaet() throws SQLException {
-        String sql;
+    public void Restart(List<String> arr) throws SQLException, MalformedURLException {
+        String sql,url;
         Statement sta;
         ResultSet rs;
-        String[] query={"DELETE FROM `expressionspositions` WHERE 1;","DELETE FROM `expressions` WHERE 1;","DELETE FROM `wordpositions` WHERE 1;","DELETE FROM `word` WHERE 1;","DELETE FROM `record` WHERE 1;","DELETE FROM `restrictedurls` WHERE 1;","ALTER TABLE `record` AUTO_INCREMENT = 1;","INSERT INTO `searchengine`.`record` (`ID`, `URL`, `document`, `Visted`, `file`,`invalid`) VALUES (NULL, 'http://resource-zone.com', '', '0', '0','0'),(NULL, 'http://en.wikipedia.org/wiki/main_page', '', '0', '0','0'), (NULL, 'http://stackoverflow.com', '', '0', '0','0'), (NULL, 'http://nature.com/index.html', '', '0', '0','0'), (NULL, 'http://w3.org', '', '0', '0','0'), (NULL, 'http://dmoztools.net', '', '0', '0','0'), (NULL, 'http://unicef.org', '', '0', '0','0') ,(NULL, 'http://ibm.com/us-en', '', '0', '0','0');"};
-        for(int i=0;i<8;i++)
+        String[] query={"DELETE FROM `expressionspositions` WHERE 1;","DELETE FROM `expressions` WHERE 1;","DELETE FROM `wordpositions` WHERE 1;","DELETE FROM `word` WHERE 1;","DELETE FROM `record` WHERE 1;","DELETE FROM `restrictedurls` WHERE 1;","ALTER TABLE `record` AUTO_INCREMENT = 1;"};
+        //,"INSERT INTO `searchengine`.`record` (`ID`, `URL`, `document`, `Visted`, `file`,`invalid`) VALUES (NULL, 'http://resource-zone.com', '', '0', '0','0'),(NULL, 'http://en.wikipedia.org/wiki/main_page', '', '0', '0','0'), (NULL, 'http://stackoverflow.com', '', '0', '0','0'), (NULL, 'http://nature.com/index.html', '', '0', '0','0'), (NULL, 'http://w3.org', '', '0', '0','0'), (NULL, 'http://dmoztools.net', '', '0', '0','0'), (NULL, 'http://unicef.org', '', '0', '0','0') ,(NULL, 'http://ibm.com/us-en', '', '0', '0','0');"};
+        for(int i=0;i<=6;i++)
         {
 	        sql=query[i];
+	        sta = conn.createStatement();
+	        sta.execute(sql);
+        }
+        for(int i=0;i<arr.size();i++)
+        {
+        	url=Normalize(arr.get(i));
+	        sql="INSERT INTO `searchengine`.`record` (`ID`, `URL`, `document`, `Visted`, `file`,`invalid`) VALUES (NULL,'"+url+"', '', '0', '0','0')";
 	        sta = conn.createStatement();
 	        sta.execute(sql);
         }
@@ -67,7 +76,8 @@ public class DATABASE {
  		return url;
     }
     public boolean Check_Exist(String url) throws SQLException, MalformedURLException {
-    	url=Normalize(url);
+    	if(url.equals(""))
+ 			return true;
         String sql="SELECT id FROM `record` WHERE url='"+url+"'";
         Statement sta = conn.createStatement();
         ResultSet rs = sta.executeQuery(sql);
@@ -102,42 +112,34 @@ public class DATABASE {
         sta.execute(sql);
     }
 
-    public void UpdateVisted(String url) throws SQLException, MalformedURLException {
-        url=Normalize(url);
+    public synchronized void UpdateVisted(String url) throws SQLException, MalformedURLException {
         String sql="UPDATE `record` SET `Visted`=1 WHERE URL ='"+url+"'";
         Statement sta = conn.createStatement();
         sta.execute(sql);
     }
-    public void UpdateDoc(String url,String text) throws SQLException, MalformedURLException {
-//UPDATE customers SET record = '"+Judy+"'WHERE url = '"url"'"";
-        //BufferedWriter bw = null;
-        // FileWriter fw = null;
-      /*  try {
-            String content = "This is the content to write into file\n";
-            fw = new FileWriter("'"+url+"'"+".html");
-            bw = new BufferedWriter(fw);
-            bw.write(text);
-            System.out.println("Done");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
-    	url=Normalize(url);
-        try{
-            // BufferedWriter writer
-            //FileWriter fw     	
-            PrintWriter writer = new PrintWriter(Getid(url)+".html", "UTF-8");
-            writer.print(text);
-            writer.println("The second line");
-            writer.close();
-        } catch (IOException e) {
-            System.out.println("hereeeeeeeeeeeeeeeeee");
+    
+    
+    //////////
+    public void UpdateDoc(String url,String text) throws SQLException {
+
+        if(!text.equals("")) {
+            try {
+                int id = Getid(url);
+                String filename = id + ".html";
+                File myfile = new File(filename);
+                FileWriter writer = new FileWriter(myfile, true);
+                writer.write(text);
+                writer.close();
+            }
+
+            catch (IOException e) {
+
+            }
+
         }
-        // String sql="UPDATE record SET document = '"+text+"'WHERE url = '"+url+"'";
-        //Statement sta = conn.createStatement();
-        //sta.execute(sql);
+        
     }
     public void Updatefile(String url) throws SQLException, MalformedURLException {
-    	url=Normalize(url);
         String sql="UPDATE record SET `file` = '1' WHERE `record`.`url` ='"+url+"'";
         Statement sta = conn.createStatement();
         sta.execute(sql);
@@ -172,20 +174,18 @@ public class DATABASE {
         Statement sta = conn.createStatement();
         sta.execute(sql);
     }
-    public String GetURL(int n,int ind) throws SQLException, MalformedURLException {
+    public synchronized String GetURL(int n,int ind) throws SQLException, MalformedURLException {
 
         String sql="SELECT url FROM record where visted =0 and file=0 and invalid=0 LIMIT 1";
         Statement sta = conn.createStatement();
         String value="";
 
         ResultSet resultSet=sta.executeQuery(sql);
-        ResultSetMetaData rsmd = resultSet.getMetaData();
-      //  int columnsNumber = rsmd.getColumnCount();
-    //    int count=0;
+      
         if (resultSet.next()) {
-        	URL url = new URL(resultSet.getString(1).toLowerCase());
-    		System.out.println("http://"+url.getNormalizedUrl());  
-    		value = "http://"+url.getNormalizedUrl();
+        	//URL url = new URL(resultSet.getString(1).toLowerCase());
+    		//System.out.println("http://"+url.getNormalizedUrl());  
+    		value = resultSet.getString(1);
           //  System.out.println(value);
            // break;
         }
