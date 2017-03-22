@@ -2,7 +2,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URL;
 import java.sql.Connection;
 import java.sql.ResultSetMetaData;
 import java.sql.DriverManager;
@@ -12,8 +11,12 @@ import java.sql.SQLException;
 import java.sql.ResultSet;
 import java.io.*;
 import java.sql.Statement;
+import java.util.Scanner;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.net.MalformedURLException;
+
+import ch.sentric.URL;
 
 public class DATABASE {
     public static Connection conn = null;
@@ -40,7 +43,31 @@ public class DATABASE {
         Statement sta = conn.createStatement();
         return sta.execute(sql);
     }
-    public boolean Check_Exist(String url) throws SQLException {
+    public void Restaet() throws SQLException {
+        String sql;
+        Statement sta;
+        ResultSet rs;
+        String[] query={"DELETE FROM `expressionspositions` WHERE 1;","DELETE FROM `expressions` WHERE 1;","DELETE FROM `wordpositions` WHERE 1;","DELETE FROM `word` WHERE 1;","DELETE FROM `record` WHERE 1;","DELETE FROM `restrictedurls` WHERE 1;","ALTER TABLE `record` AUTO_INCREMENT = 1;","INSERT INTO `searchengine`.`record` (`ID`, `URL`, `document`, `Visted`, `file`,`invalid`) VALUES (NULL, 'http://resource-zone.com', '', '0', '0','0'),(NULL, 'http://en.wikipedia.org/wiki/main_page', '', '0', '0','0'), (NULL, 'http://stackoverflow.com', '', '0', '0','0'), (NULL, 'http://nature.com/index.html', '', '0', '0','0'), (NULL, 'http://w3.org', '', '0', '0','0'), (NULL, 'http://dmoztools.net', '', '0', '0','0'), (NULL, 'http://unicef.org', '', '0', '0','0') ,(NULL, 'http://ibm.com/us-en', '', '0', '0','0');"};
+        for(int i=0;i<8;i++)
+        {
+	        sql=query[i];
+	        sta = conn.createStatement();
+	        sta.execute(sql);
+        }
+        return;
+    }
+    public String Normalize(String url) throws MalformedURLException
+    {
+    	URL u = new URL(url.toLowerCase());
+ 		url = u.getNormalizedUrl();
+ 		if(url.equals(""))
+ 			return url;
+ 		else
+ 	 		url = "http://"+url;
+ 		return url;
+    }
+    public boolean Check_Exist(String url) throws SQLException, MalformedURLException {
+    	url=Normalize(url);
         String sql="SELECT id FROM `record` WHERE url='"+url+"'";
         Statement sta = conn.createStatement();
         ResultSet rs = sta.executeQuery(sql);
@@ -62,8 +89,11 @@ public class DATABASE {
             return false;
         }
     }
-    public void Insert(String url,String text) throws SQLException {
+    public void Insert(String url,String text) throws SQLException, MalformedURLException {
 
+        if(url.equals(""))
+            return;
+        url=Normalize(url);
         if(url.equals(""))
             return;
         String sql="INSERT INTO `record`(`ID`, `URL`, `document`,  `Visted`, `file`, `invalid`) VALUES (NULL,'"+url+"','"+text+"','0','0','0');";
@@ -72,13 +102,13 @@ public class DATABASE {
         sta.execute(sql);
     }
 
-    public void UpdateVisted(String url) throws SQLException {
-
+    public void UpdateVisted(String url) throws SQLException, MalformedURLException {
+        url=Normalize(url);
         String sql="UPDATE `record` SET `Visted`=1 WHERE URL ='"+url+"'";
         Statement sta = conn.createStatement();
         sta.execute(sql);
     }
-    public void UpdateDoc(String url,String text) throws SQLException {
+    public void UpdateDoc(String url,String text) throws SQLException, MalformedURLException {
 //UPDATE customers SET record = '"+Judy+"'WHERE url = '"url"'"";
         //BufferedWriter bw = null;
         // FileWriter fw = null;
@@ -91,22 +121,23 @@ public class DATABASE {
         } catch (IOException e) {
             e.printStackTrace();
         }*/
+    	url=Normalize(url);
         try{
             // BufferedWriter writer
-            //FileWriter fw
-            PrintWriter writer = new PrintWriter("'"+url+"'"+".html", "UTF-8");
+            //FileWriter fw     	
+            PrintWriter writer = new PrintWriter(Getid(url)+".html", "UTF-8");
             writer.print(text);
             writer.println("The second line");
             writer.close();
         } catch (IOException e) {
-            // do something
+            System.out.println("hereeeeeeeeeeeeeeeeee");
         }
         // String sql="UPDATE record SET document = '"+text+"'WHERE url = '"+url+"'";
         //Statement sta = conn.createStatement();
         //sta.execute(sql);
     }
-    public void Updatefile(String url) throws SQLException {
-
+    public void Updatefile(String url) throws SQLException, MalformedURLException {
+    	url=Normalize(url);
         String sql="UPDATE record SET `file` = '1' WHERE `record`.`url` ='"+url+"'";
         Statement sta = conn.createStatement();
         sta.execute(sql);
@@ -124,38 +155,46 @@ public class DATABASE {
             }
         return value;
     }
-    public ResultSet Getid(String url) throws SQLException {
+    public int Getid(String url) throws SQLException {
 
-        String sql="SELECT id FROM `record` WHERE url='"+url+"'";
+    	String sql="SELECT id FROM `record` WHERE url='"+url+"'";
         Statement sta = conn.createStatement();
-        return sta.executeQuery(sql);
+        ResultSet rs = sta.executeQuery(sql);
+        int value=0;
+        if (rs.next()) {
+            value= Integer.parseInt(rs.getString(1));
+            int id=Integer.parseInt(Thread.currentThread().getName());
+            System.out.println("thread num"+id +" "+value);}
+        return value;
     }
     public void SetInvalid(String url) throws SQLException {
-
         String sql="UPDATE `record` SET `invalid`=1 WHERE URL ='"+url+"'";
         Statement sta = conn.createStatement();
         sta.execute(sql);
     }
-    public String GetURL(int n,int ind) throws SQLException {
+    public String GetURL(int n,int ind) throws SQLException, MalformedURLException {
 
-        String sql="SELECT url FROM record where visted =0 and file=0 and invalid=0 LIMIT "+n;
+        String sql="SELECT url FROM record where visted =0 and file=0 and invalid=0 LIMIT 1";
         Statement sta = conn.createStatement();
         String value="";
 
         ResultSet resultSet=sta.executeQuery(sql);
         ResultSetMetaData rsmd = resultSet.getMetaData();
-        int columnsNumber = rsmd.getColumnCount();
-        int count=0;
-        while (resultSet.next()) {
-
-            //  for (int i = ind-1; i < columnsNumber; i++)
-            if(count==ind)
-            {    value = resultSet.getString(1);
-              //  System.out.println(value);
-                break;
-            }
-            count++;
+      //  int columnsNumber = rsmd.getColumnCount();
+    //    int count=0;
+        if (resultSet.next()) {
+        	URL url = new URL(resultSet.getString(1).toLowerCase());
+    		System.out.println("http://"+url.getNormalizedUrl());  
+    		value = "http://"+url.getNormalizedUrl();
+          //  System.out.println(value);
+           // break;
         }
+            //  for (int i = ind-1; i < columnsNumber; i++)
+//            if(count==ind)
+               
+            	
+  //          count++;
+       
         // if (i > 1) System.out.print(",  ");
                 /*String columnValue = resultSet.getString(i);
                 System.out.print(columnValue + " " + rsmd.getColumnName(i));
@@ -187,18 +226,18 @@ public class DATABASE {
             statement = conn.prepareStatement("insert into `Word` (`word`,`Wid`,`Stemming`) values('"+Word+"',NULL,"+Sword+")");
         statement.execute();
     }
-    public static void InsertInWordPositions(long w_id,int doc_id,int position,int importance) throws SQLException
+    public static void InsertInWordPositions(long w_id,long doc_id,int position,int importance) throws SQLException
     {
         //importance=3 if title,=2 if header,=1 else
         PreparedStatement statement;
         statement = conn.prepareStatement("insert into `wordpositions` (`w_id`,`doc_id`,`position`,`importance`) values("+w_id+","+doc_id+","+position+","+importance+")");
         statement.execute();
     }
-    public static void InsertInExpressionsPositions(long expression_id,int doc_id,int start_position,int end_position) throws SQLException
+    public static void InsertInExpressionsPositions(long expression_id,long doc_id,int start_position,int end_position,int important) throws SQLException
     {
 
         PreparedStatement statement;
-        statement = conn.prepareStatement("insert into `expressionspositions` (`expression_id`,`doc_id`,`start_pos`,`end_pos`) values("+expression_id+","+doc_id+","+start_position+","+end_position+")");
+        statement = conn.prepareStatement("insert into `expressionspositions` (`expression_id`,`doc_id`,`start_pos`,`end_pos`,`importance`) values("+expression_id+","+doc_id+","+start_position+","+end_position+","+important+")");
         statement.execute();
     }
     //Check exitance in word table
