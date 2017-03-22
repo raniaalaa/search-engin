@@ -2,9 +2,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.sql.Statement;
 
+import org.apache.commons.collections4.bag.SynchronizedBag;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+
 
 
 //import com.mysql.fabric.Response;
@@ -64,8 +66,10 @@ public class SPIDER implements Runnable{
         number=n;
 
     }
-    public  void DoNotCrawl(String url) throws SQLException
+    public  void DoNotCrawl(String url,String now) throws SQLException
     {//Connection conn1 = null;
+        System.out.println("Thread num "+Thread.currentThread().getName()+" in DNC with "+now);
+
         try{   String str,robot,temp;
             str=robot=temp="";
             InputStream inputStream;
@@ -107,6 +111,7 @@ public class SPIDER implements Runnable{
                 }
 
             }
+            System.out.println("Thread num "+Thread.currentThread().getName()+" leaving DNC with "+now);
         }
         catch(IOException e)
         {
@@ -118,7 +123,7 @@ public class SPIDER implements Runnable{
     }
     public  boolean CheckRobotDisallow(String url) throws SQLException, IOException
     {
-
+        System.out.println("Thread num "+Thread.currentThread().getName()+" in CRD");
         String sql="SELECT id FROM `restrictedurls` WHERE ulr='"+url+"'";
         ResultSet rs;
         Statement sta = db.conn.createStatement();
@@ -126,10 +131,11 @@ public class SPIDER implements Runnable{
 
         if(!rs.isBeforeFirst())
         {
-
+            System.out.println("Thread num "+Thread.currentThread().getName()+" leaving CRD");
             return true;
         }
         else {
+            System.out.println("Thread num "+Thread.currentThread().getName()+" leaving CRD");
             return false;
         }
     }
@@ -143,16 +149,19 @@ public class SPIDER implements Runnable{
     }
     public void Crawl(String url) throws SQLException, IOException
     {if(url!=null&&!url.equals(""))
-    { doc = Jsoup.connect(url).timeout(4000).userAgent(useragent).get();
+    { 
+        int id=Integer.parseInt(Thread.currentThread().getName());
+        System.out.println("Thread num "+id+" will Crawl with "+url);
+        doc = Jsoup.connect(url).timeout(4000).userAgent(useragent).get();
+        System.out.println("Jsoup connected for "+id);
         if(!doc.html().equals(""))
         {    db.UpdateDoc(url,doc.html());
-            // System.out.println("doc done ");
             db.Updatefile(url);
+            System.out.println("doc done from "+id+" with "+url);
 
         }
-       // System.out.println("jsoup done");
+        System.out.println("jsoup done");
         org.jsoup.select.Elements links=doc.select("a[href]");
-        int id=Integer.parseInt(Thread.currentThread().getName());
         boolean flag3=IsHTML(doc.html());
 
         db.UpdateVisted(url);
@@ -161,7 +170,7 @@ public class SPIDER implements Runnable{
         for(Element e: links)
 
         {  String tmpurl=e.attr("abs:href");
-            DoNotCrawl(tmpurl);
+            DoNotCrawl(tmpurl,url);
          //   System.out.println("dont crawl");
 
             flag1=db.Check_Exist(tmpurl);
@@ -177,7 +186,7 @@ public class SPIDER implements Runnable{
 
 
         }
-
+        System.out.println("Thread num "+id+" leaving the Crawl");
     }
     }
 
@@ -187,6 +196,7 @@ public class SPIDER implements Runnable{
       //  System.out.print("run ");
         String url="";
         int id=Integer.parseInt(Thread.currentThread().getName());
+        System.out.println("Thread num "+id+" is running");
      //   url=urlarray.get(Integer.parseInt(Thread.currentThread().getName()));
         int count=0;
         String currentUrl="";
@@ -212,8 +222,9 @@ public class SPIDER implements Runnable{
                     currentUrl = url;
                 }
                 else
-                {
+                {synchronized(this){
                     currentUrl = db.GetURL(number,id);
+                    db.UpdateVisted(currentUrl);}
                 }
                 Crawl(currentUrl);
                 count =db.GetCount();

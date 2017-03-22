@@ -9,20 +9,26 @@ public class MAIN {
 
     public static void main(String[] args) throws Exception {
 /*
- * DELETE FROM `expressions` WHERE 1;
- * DELETE FROM `expressionspositions` WHERE 1;
- * DELETE FROM `record` WHERE 1;
- * DELETE FROM `word` WHERE 1;
- * ALTER TABLE `record` AUTO_INCREMENT = 1;
- * INSERT INTO `record`(`ID`, `URL`, `document`, `Visted`, `file`) VALUES ('NULL','http://www.quackit.com/html','NULL','0','0');
+ DELETE FROM `expressionspositions` WHERE 1;
+ DELETE FROM `expressions` WHERE 1;
+ DELETE FROM `wordpositions` WHERE 1;
+ DELETE FROM `word` WHERE 1;
+ DELETE FROM `record` WHERE 1;
+ DELETE FROM `restrictedurls` WHERE 1;
+ ALTER TABLE `record` AUTO_INCREMENT = 1;
+ INSERT INTO `searchengine`.`record` (`ID`, `URL`, `document`, `Visted`, `file`) VALUES (NULL, 'https://en.wikipedia.org/wiki/Main_Page', '', '0', '0'), (NULL, 'http://stackoverflow.com/', '', '0', '0'), (NULL, 'http://nature.com/index.html', '', '0', '0'), (NULL, 'https://w3.org/', '', '0', '0'), (NULL, 'http://dmoztools.net/', '', '0', '0'), (NULL, 'http://unicef.org/', '', '0', '0') ,(NULL, 'http://ibm.com/us-en/', '', '0', '0');
  */
-      /*Scanner reader = new Scanner(System.in);  // Reading from System.in
+    	/////////////////////////////////////////////
+        DATABASE db=new DATABASE();
+    	db.Restaet();
+    	////////////////////////////////////////////
+      Scanner reader = new Scanner(System.in);  // Reading from System.in
        System.out.println("Enter the number of threads between 1 and 10: ");
         int size=0; ;
         while(true)
         {
         	size=reader.nextInt();
-        	if(size>10||size<1)
+        	if(size>20||size<1)
                 System.out.println("Enter the number of threads between 1 and 10: ");
         	else
         		break;
@@ -37,10 +43,10 @@ public class MAIN {
         }
         reader.close(); 
         for (int j = 0; j < size; j++)
-            myThreads[j].join();*/
+            myThreads[j].join();
 
         INDEXER I=new INDEXER();
-        File input = new File("C:/Users/mennna/Documents/Indexer1");  // pages in folder "html" // 
+        File input = new File("C:/Users/user/workspace/Spider");  // pages in folder "html" // 
         File[] st = input.listFiles();
         System.out.println(st.length);
         String [] Importance={"","",""};
