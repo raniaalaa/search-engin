@@ -1,3 +1,4 @@
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.sql.Statement;
@@ -38,37 +39,40 @@ public class SPIDER implements Runnable{
     int number;
     Thread mythread ;
     public SPIDER(){}
-    public SPIDER ( int n) throws SQLException
-    { // mythread=t;
+    public SPIDER ( int n) throws SQLException, MalformedURLException { // mythread=t;
         // t.start();
         //  this.conn=conn;
+
         urlarray=new ArrayList<String>();
-        urlarray.add("https://en.wikipedia.org/wiki/Main_Page");
-        urlarray.add("http://stackoverflow.com/");
-        urlarray.add("http://w3schools.com/");
-        urlarray.add("https://www.tutorialspoint.com/");
-        urlarray.add("http://illinois.edu/");
-        urlarray.add("https://opensource.org/");
-        // urlarray.add("http://www.dmoz.org/");
-        urlarray.add("http://marketwatch.com/");
-        urlarray.add("http://usnews.com/");
-        urlarray.add("https://www.amazon.com/");
-        urlarray.add("http://unicef.org/");
-        urlarray.add("http://pen.io/");
-        urlarray.add("https://w3.org/");
-        urlarray.add("https://drupal.org/");
-        urlarray.add("http://ibm.com/us-en/");
+        urlarray.add("https://en.wikipedia.org/wiki/main_Page");
+        urlarray.add("https://answers.yahoo.com");
+        urlarray.add("http://stackoverflow.com");
+        urlarray.add("http://w3schools.com");
+        urlarray.add("http://www.imdb.com");
+        urlarray.add("http://www.wikihow.com");
+        urlarray.add("https://opensource.org");
+        urlarray.add("https://www.pinterest.com");
+        urlarray.add("http://marketwatch.com");
+        urlarray.add("http://www.carmagazine.co.uk");
+        urlarray.add("http://www.bbc.com");
+        urlarray.add("http://www.ebay.co.uk");
+        urlarray.add("https://www.nytimes.com");
+        urlarray.add("https://www.amazon.com");
+        urlarray.add("http://unicef.org");
+        urlarray.add("http://www.mti.edu.eg");
+        urlarray.add("https://w3.org");
         urlarray.add("http://nature.com/index.html");
-        urlarray.add("https://tripadvisor.com.eg/");
-        urlarray.add("http://statcounter.com/");
-        urlarray.add("http://tiny.cc/");
+        urlarray.add("http://ibm.com/us-en");
+        urlarray.add("https://www.microsoft.com");
+        urlarray.add("https://dailytekk.com/");
+       // db.Restart(urlarray);
 
         number=n;
 
     }
     public  void DoNotCrawl(String url,String now) throws SQLException
     {//Connection conn1 = null;
-        System.out.println("Thread num "+Thread.currentThread().getName()+" in DNC with "+now);
+       // System.out.println("Thread num "+Thread.currentThread().getName()+" in DNC with "+now);
 
         try{   String str,robot,temp;
             str=robot=temp="";
@@ -111,7 +115,7 @@ public class SPIDER implements Runnable{
                 }
 
             }
-            System.out.println("Thread num "+Thread.currentThread().getName()+" leaving DNC with "+now);
+         //   System.out.println("Thread num "+Thread.currentThread().getName()+" leaving DNC with "+now);
         }
         catch(IOException e)
         {
@@ -123,7 +127,7 @@ public class SPIDER implements Runnable{
     }
     public  boolean CheckRobotDisallow(String url) throws SQLException, IOException
     {
-        System.out.println("Thread num "+Thread.currentThread().getName()+" in CRD");
+        //System.out.println("Thread num "+Thread.currentThread().getName()+" in CRD");
         String sql="SELECT id FROM `restrictedurls` WHERE ulr='"+url+"'";
         ResultSet rs;
         Statement sta = db.conn.createStatement();
@@ -131,62 +135,79 @@ public class SPIDER implements Runnable{
 
         if(!rs.isBeforeFirst())
         {
-            System.out.println("Thread num "+Thread.currentThread().getName()+" leaving CRD");
+            //System.out.println("Thread num "+Thread.currentThread().getName()+" leaving CRD");
             return true;
         }
         else {
-            System.out.println("Thread num "+Thread.currentThread().getName()+" leaving CRD");
+          //  System.out.println("Thread num "+Thread.currentThread().getName()+" leaving CRD");
             return false;
         }
     }
     public boolean IsHTML(String text) throws IOException
     {
+        if(!text.equals("")) {
+            if (text.contains("<!doctype html>") || text.contains("<html>"))
+                return true;
 
-        if(text.contains("<!doctype html>")||text.contains("<html>"))
-            return true;
-
-        else return false;
+        else return false;}
+        return false;
     }
+
+
+
+
     public void Crawl(String url) throws SQLException, IOException
     {if(url!=null&&!url.equals(""))
     { 
         int id=Integer.parseInt(Thread.currentThread().getName());
-        System.out.println("Thread num "+id+" will Crawl with "+url);
-        doc = Jsoup.connect(url).timeout(4000).userAgent(useragent).get();
-        System.out.println("Jsoup connected for "+id);
-        if(!doc.html().equals(""))
+      //  System.out.println("Thread num "+id+" will Crawl with "+url);
+        try{doc = Jsoup.connect(url).timeout(3000).userAgent(useragent).get();
+        }
+        catch (IOException e)
+        {
+            db.SetInvalid(url);
+        }
+      //  System.out.println("Jsoup connected for "+id);
+        boolean flag3=IsHTML(doc.html());
+        if(!doc.html().equals("")&&flag3)
         {    db.UpdateDoc(url,doc.html());
             db.Updatefile(url);
-            System.out.println("doc done from "+id+" with "+url);
+       //     System.out.println("doc done from "+id+" with "+url);
 
         }
-        System.out.println("jsoup done");
+     //   System.out.println("jsoup done");
         org.jsoup.select.Elements links=doc.select("a[href]");
-        boolean flag3=IsHTML(doc.html());
 
-        db.UpdateVisted(url);
 
-        boolean flag1,flag2;
+       // db.UpdateVisted(url);
+
+        boolean flag1,flag2=false;
         for(Element e: links)
 
         {  String tmpurl=e.attr("abs:href");
-            DoNotCrawl(tmpurl,url);
-         //   System.out.println("dont crawl");
-
             flag1=db.Check_Exist(tmpurl);
 
-            flag2=CheckRobotDisallow(tmpurl);
-          //  System.out.println("CheckRobotDisallow ");
-            if(flag1&flag2&flag3)
-            {
-                db.Insert(tmpurl, "");
-            //    System.out.println("insert ");
-            }
-            //   else System.out.print(" thread number" +id+" link exist in db ");
+            if(flag1) {
+                flag2 = CheckRobotDisallow(tmpurl);
+                if (flag2){
+                    URL tmp=new URL(tmpurl);
+                    String host=tmp.getHost();
+                    if(host.equals(tmpurl))
+                    DoNotCrawl(tmpurl, url);
 
+                //   System.out.println("dont crawl");
+
+
+                //  System.out.println("CheckRobotDisallow ");
+                if (flag1 & flag2 )
+                    db.Insert(tmpurl, "");
+                    //    System.out.println("insert ");
+                }
+                //   else System.out.print(" thread number" +id+" link exist in db ");
+            }
 
         }
-        System.out.println("Thread num "+id+" leaving the Crawl");
+        //System.out.println("Thread num "+id+" leaving the Crawl");
     }
     }
 
@@ -196,7 +217,7 @@ public class SPIDER implements Runnable{
       //  System.out.print("run ");
         String url="";
         int id=Integer.parseInt(Thread.currentThread().getName());
-        System.out.println("Thread num "+id+" is running");
+      //  System.out.println("Thread num "+id+" is running");
      //   url=urlarray.get(Integer.parseInt(Thread.currentThread().getName()));
         int count=0;
         String currentUrl="";
@@ -222,7 +243,7 @@ public class SPIDER implements Runnable{
                     currentUrl = url;
                 }
                 else
-                {synchronized(this){
+                {synchronized(db){
                     currentUrl = db.GetURL(number,id);
                     db.UpdateVisted(currentUrl);}
                 }
@@ -232,11 +253,7 @@ public class SPIDER implements Runnable{
             catch (SQLException |IOException e ) {
                 // TODO Auto-generated catch block
                 System.out.println("invalid url ");
-                try {
-                    db.SetInvalid(currentUrl);
-                } catch (SQLException e1) {
-                   // e1.printStackTrace();
-                }
+
                 //  e.printStackTrace();
                /* try {
                     //int v,f;
