@@ -52,36 +52,22 @@ public class MAIN extends TimerTask {
         }
 
         INDEXER I=new INDEXER();
-        File input = new File("E://c,p3//search-engin-master//html");  // pages in folder "html" //
+        File input = new File("html");  // pages in folder "html" // 
         File[] st = input.listFiles();
         System.out.println(st.length);
         String [] Importance={"","",""};
         FILER filer=new FILER();
-        for (int i = 0; i < st.length; i++)
+        long doc_id;
+        for (int i = 0; i < st.length; i++) 
         {
-            if(st[i].isFile())
-            {
-                if(!st[i].getName().contains(".html"))
-                    continue;
-                String FileName=st[i].getName().replace(".html","");
-                long doc_id=Long.parseLong(FileName);
-                try {
-                    Importance = filer.Dealing_Files(st[i]);
-                } catch (IOException e1) {
-                    // TODO Auto-generated catch block
-                    e1.printStackTrace();
-                }
-                ///////////////////////////edited///////////////////////////////////
-                try {
-                    I.Run(FILER.GetText(),doc_id,Importance);
-                } catch (Exception e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-                System.out.println(FILER.GetText());
-            }
-        }
-
+             String FileName=st[i].getName().replace(".html","");
+             doc_id=Long.parseLong(FileName);
+             Importance = filer.Dealing_Files(st[i]);
+            I.Run(FILER.GetText(),doc_id,Importance);
+            System.out.println(doc_id+" "+st[i].getName()+" "+i);
+          //  break;
+         }
+    	INDEXER.InsEx();   // Insert the expressions into the database
     }
 
 }
