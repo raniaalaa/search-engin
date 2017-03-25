@@ -12,11 +12,12 @@ import java.util.TimerTask;
 public class MAIN extends TimerTask {
 
     public void run() {
-       // DATABASE db=new DATABASE();
+       DATABASE db=new DATABASE();
         ////////////////////////////////////////////
         Scanner reader = new Scanner(System.in);  // Reading from System.in
         System.out.println("Enter the number of threads between 1 and 20: ");
         int size=0; ;
+
         while(true)
         {
             size=reader.nextInt();
@@ -28,7 +29,10 @@ public class MAIN extends TimerTask {
         CRAWLER crawler;
 
         try {
-            crawler = new CRAWLER (size);
+            int counter=db.GetCount();
+            if (counter<5000)
+            crawler = new CRAWLER (size,false);
+            else crawler = new CRAWLER (size,true);
             Thread spiderThreads[] = new Thread[size];
             for (int j = 0; j < size; j++) {
                 spiderThreads[j] = new Thread(crawler);

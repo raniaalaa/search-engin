@@ -21,9 +21,7 @@ public class CRAWLER implements Runnable{
    private Document doc1;
    private DATABASE db=new DATABASE();
     int number;
-    Thread mythread ;
-    public CRAWLER(){}
-    public CRAWLER( int n) throws SQLException, MalformedURLException ,IOException{ // mythread=t;
+        public CRAWLER( int n,boolean restart) throws SQLException, MalformedURLException ,IOException{ // mythread=t;
 
 
         urlarray=new ArrayList<String>();
@@ -48,7 +46,10 @@ public class CRAWLER implements Runnable{
         urlarray.add("http://ibm.com/us-en");
         urlarray.add("https://www.microsoft.com");
         urlarray.add("https://dailytekk.com/");
-        db.Restart(urlarray);
+        if(restart)
+        {
+            db.Restart(urlarray);
+
         for(int i=0;i<urlarray.size();i++)
           {
            String url=db.Normalize(urlarray.get(i));
@@ -66,6 +67,7 @@ public class CRAWLER implements Runnable{
                 db.UpdateDoc(url,doc.html());
             }
           }
+         }
         number=n;
 
     }
@@ -202,9 +204,9 @@ public class CRAWLER implements Runnable{
                 continue;
 
             if(flagrobot) {
-                doc1 = Jsoup.connect(tmpurl).timeout(3000).userAgent(useragent).get();
-                synchronized (db){
 
+                synchronized (db){
+                    doc1 = Jsoup.connect(tmpurl).timeout(3000).userAgent(useragent).get();
                     flagexist = db.Check_Exist(tmpurl);
                  if(!flagexist)
                      continue;
@@ -225,13 +227,13 @@ public class CRAWLER implements Runnable{
                     }
                 }
                 }
+                    DoNotCrawl(tmpurl, url);
+                    if(!doc1.html().equals("")&&IsHTML(doc1.html())){
+                        db.UpdateDoc(tmpurl,doc1.html());
+                        db.Updatefile(tmpurl);
+                    }
+                }
 
-                }
-                DoNotCrawl(tmpurl, url);
-                if(!doc1.html().equals("")&&IsHTML(doc1.html())){
-                    db.UpdateDoc(tmpurl,doc1.html());
-                    db.Updatefile(tmpurl);
-                }
             }
 
         }
@@ -240,7 +242,6 @@ public class CRAWLER implements Runnable{
 
     @Override
     public void run() {
-        // TODO Auto-generated method stub
 
         String url="";
         int id=Integer.parseInt(Thread.currentThread().getName());
@@ -251,15 +252,10 @@ public class CRAWLER implements Runnable{
 
             count = db.GetCount();
         } catch (SQLException e1) {
+
         }
         while(count<5000){
             try {
-                Statement st=db.conn.createStatement();
-
-                ResultSet result;
-
-                String q="select * from record";
-
                 {synchronized(db){
                     currentUrl = db.GetURL(number,id);
                     db.UpdateVisted(currentUrl);}
@@ -268,8 +264,8 @@ public class CRAWLER implements Runnable{
                 count =db.GetCount();
             }
             catch (SQLException |IOException e ) {
-                // TODO Auto-generated catch block
                 System.out.println("invalid url ");
+
                 continue;
             }
         }
