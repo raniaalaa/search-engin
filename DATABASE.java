@@ -16,8 +16,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
+import org.apache.commons.lang3.tuple.Pair;
 
-import org.apache.commons.lang3.Pair;
+//import org.apache.commons.lang3.Pair;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -54,9 +55,8 @@ public class DATABASE {
         String sql,url;
         Statement sta;
         ResultSet rs;
-        String[] query={"DELETE FROM `expressionscounts` WHERE 1;","DELETE FROM `expressions` WHERE 1;","DELETE FROM `wordpositions` WHERE 1;","DELETE FROM `word` WHERE 1;","DELETE FROM `record` WHERE 1;","DELETE FROM `restrictedurls` WHERE 1;","DELETE FROM `wordpositions` WHERE 1","DELETE FROM `word` WHERE 1","ALTER TABLE `record` AUTO_INCREMENT = 1;","ALTER TABLE `word` AUTO_INCREMENT = 1;"};
-        //,"INSERT INTO `searchengine`.`record` (`ID`, `URL`, `document`, `Visted`, `file`,`invalid`) VALUES (NULL, 'http://resource-zone.com', '', '0', '0','0'),(NULL, 'http://en.wikipedia.org/wiki/main_page', '', '0', '0','0'), (NULL, 'http://stackoverflow.com', '', '0', '0','0'), (NULL, 'http://nature.com/index.html', '', '0', '0','0'), (NULL, 'http://w3.org', '', '0', '0','0'), (NULL, 'http://dmoztools.net', '', '0', '0','0'), (NULL, 'http://unicef.org', '', '0', '0','0') ,(NULL, 'http://ibm.com/us-en', '', '0', '0','0');"};
-        for(int i=0;i<=9;i++)
+        String[] query={"DELETE FROM `expressionscounts` WHERE 1;","DELETE FROM `expressions` WHERE 1;","DELETE FROM `wordpositions` WHERE 1;","DELETE FROM `word` WHERE 1;","DELETE FROM `restrictedurls` WHERE 1;","DELETE FROM `wordpositions` WHERE 1","DELETE FROM `word` WHERE 1","DELETE FROM `record` WHERE 1;","ALTER TABLE `record` AUTO_INCREMENT = 1;","ALTER TABLE `word` AUTO_INCREMENT = 1;","ALTER TABLE `expressions` AUTO_INCREMENT = 1;","ALTER TABLE `restrictedurls` AUTO_INCREMENT = 1;"};
+        for(int i=0;i<=11;i++)
         {
             sql=query[i];
             sta = conn.createStatement();
@@ -331,27 +331,50 @@ public class DATABASE {
             return -1;
     }
     
-    public static void InsWords(Map<Pair,String> words,long DocID) throws Exception
+    public static void InsOriginalWords(Map<Pair,String> words,long DocID) throws Exception
     {
+    	System.out.println("fe insertttttttttttttttttttt");
         PreparedStatement statement;
         long WID;
         for (Map.Entry<Pair, String> entry: words.entrySet())
         {
-            Pair P = entry.getKey();   //P.left->word     //P.right-?importance
-            /*System.out.println((String)P.left);
-            System.out.println((int)P.right);*/
-            
-            
+            Pair P = entry.getKey();   //P.left->word     //P.right-?importance            
             String position = entry.getValue(); 
-            //System.out.println(position);
-            if(!CheckWordExistance((String)P.left))
+            if(!CheckWordExistance((String)P.getLeft()))
+	        {	
+		        statement = conn.prepareStatement("insert into `Word` (`word`,`Wid`,`Stemming`) values('"+(String)P.getLeft()+"',NULL,NULL)");
+		        statement.execute();
+	        }
+            if(!position.equals("NO"))
+            {
+		        WID=GetWordID((String)P.getLeft());
+		        statement = conn.prepareStatement("insert into `wordpositions` (`w_id`,`doc_id`,`position`,`importance`) values("+WID+","+DocID+",'"+position+"','"+(int)P.getRight()+"')");
+		        statement.execute();
+            }
+        }	
+    }
+    public static void InsWords(Map<Pair,Pair> words,long DocID) throws Exception
+    {
+    	System.out.println("fe insertttttttt2222222222222222");
+        PreparedStatement statement;
+        long WID;
+        Pair Key,Value;
+        for (Map.Entry<Pair, Pair> entry: words.entrySet())
         {
-        statement = conn.prepareStatement("insert into `Word` (`word`,`Wid`,`Stemming`) values('"+(String)P.left+"',NULL,NULL)");
-        statement.execute();
-        }
-        WID=GetWordID((String)P.left);
-        statement = conn.prepareStatement("insert into `wordpositions` (`w_id`,`doc_id`,`position`,`importance`) values("+WID+","+DocID+",'"+position+"','"+(int)P.right+"')");
-        statement.execute();
+            Key = entry.getKey();   //P.left->word     //P.right-?importance           
+            Value = entry.getValue(); 
+            if(!CheckWordExistance((String)Key.getLeft()))
+	        {	
+    	      //  WID=GetWordID((String)Value.getRight());
+		        statement = conn.prepareStatement("insert into `Word` (`word`,`Wid`,`Stemming`) values('"+(String)Key.getLeft()+"',NULL,'"+(String)Value.getRight()+"')");
+		        statement.execute();
+	        }
+            if(!Value.getLeft().equals("NO"))
+            {
+	        WID=GetWordID((String)Key.getLeft());
+	        statement = conn.prepareStatement("insert into `wordpositions` (`w_id`,`doc_id`,`position`,`importance`) values("+WID+","+DocID+",'"+Value.getLeft()+"','"+(int)Key.getRight()+"')");
+	        statement.execute();
+            }
         }	
     }
     public static void InsExpressions(Map<Pair, Integer> expressions,long DocID) throws Exception
@@ -367,13 +390,13 @@ public class DATABASE {
             System.out.println((int)P.right);*/
             int count = entry.getValue(); 
            // System.out.println(count);
-            if(!CheckExpressionExistance((String)P.left))
+            if(!CheckExpressionExistance((String)P.getLeft()))
         { 		
-        statement = conn.prepareStatement("insert into `expressions` (`Expression`,`E_ID`) values('"+(String)P.left+"',NULL)");
+        statement = conn.prepareStatement("insert into `expressions` (`Expression`,`E_ID`) values('"+(String)P.getLeft()+"',NULL)");
         statement.execute();
         }
-        EID=GetExpressionID((String)P.left);
-        statement = conn.prepareStatement("insert into `expressionscounts` (`Expression_id`,`Doc_id`,`importance`,`count`) values("+EID+","+DocID+",'"+(int)P.right+"','"+count+"')");
+        EID=GetExpressionID((String)P.getLeft());
+        statement = conn.prepareStatement("insert into `expressionscounts` (`Expression_id`,`Doc_id`,`importance`,`count`) values("+EID+","+DocID+",'"+(int)P.getRight()+"','"+count+"')");
         statement.execute();
         }	
     }
