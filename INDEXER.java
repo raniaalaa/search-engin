@@ -1,17 +1,9 @@
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-
 import org.apache.commons.lang3.tuple.Pair;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
-import java.sql.*;
 import java.util.*;
 public class INDEXER {
 static DATABASE db=new DATABASE();
+static Map<String,String> expressionsMap = new HashMap<String,String>(); //Pair.left->l expression,Pair.right->importance,integer->count
 //////////////////////////////////////Stopping Words List///////////////////////////////
 static List<String> stopwords = Arrays.asList( 
 		"a", "about", "above", "above", "across", "after"
@@ -47,129 +39,89 @@ static List<String> stopwords = Arrays.asList(
 		"plan", "value", "principle.", "forces", "sent:", "is,", "was", "like", "discussion", "tmus", "diffrent.", 
 		"layout", "area.", "thanks", "thankyou", "hello", "bye", "rise", "fell", "fall", "psqft.",
 		"http://", "km", "miles");
-/*
-		"a", "able", "about",
-		"across", "after", "all", "almost", "also", "am", "among", "an",
-		"and", "any", "are", "as","not", "at", "be", "because", "been", "but",
-		"by", "can", "cannot", "could", "dear", "did", "do", "does",
-		"either", "else", "ever", "every", "for", "from", "get", "got",
-		"had", "has", "have", "he", "her", "hers", "him", "his", "how",
-		"however", "i", "if", "in", "into", "is", "it", "its", "just",
-		"least", "let", "like", "likely", "may", "me", "might", "most",
-		"must", "my", "neither", "no", "nor", "of", "off", "often",
-		"on", "only", "or", "other", "our", "own", "rather", "said", "say",
-		"says", "she", "should", "since", "so", "some", "than", "that",
-		"the", "their", "them", "then", "there", "these", "they", "this",
-		"tis", "to", "too", "twas", "us", "wants", "was", "we", "were",
-		"what", "when", "where", "which", "while", "who", "whom", "why",
-		"will", "with", "would", "yet", "you", "your"*/
-
-
 
 INDEXER()
 {}
+////////////////////////////////Get the importance of a word////////////////////////////////////////////
 public static int Importance(String [] importance,String word) 
 {
-	for (String title_element: importance[0].split("\\P{Alpha}+")) 
+	for (String title_element: importance[0].split("\\P{Alpha}+")) ///If title -> 4
 	{
 		if(word.equals(title_element.toLowerCase()))
 		{
 			return 4;
 		}
 	}
-	for (String img_element: importance[2].split("\\P{Alpha}+")) 
+	for (String img_element: importance[2].split("\\P{Alpha}+"))  ///If image -> 3
 	{
 		if(word.equals(img_element.toLowerCase()))
 		{
 			return 3;
 		}
 	}
-	for (String header_element: importance[1].split("\\P{Alpha}+")) 
+	for (String header_element: importance[1].split("\\P{Alpha}+")) ///If header -> 2
 	{
 		if(word.equals(header_element.toLowerCase()))
 		{
 			return 2;
 		}
 	}
-	return 1;
+	return 1;                                                       ///Else ->1
 	 
 }
+/////////////////////////////////Get the stemming of a word//////////////////////////////////////////
 public static String Stemmer(String word)
 {
-	 porterStemmer ps=new porterStemmer();
-		return ps.stemTerm(word); 
+	 return porterStemmer.stemTerm(word); 
 }
- 
+ /////////////////////////////////////Run the indexer//////////////////////////////////////////////
  public static void Run(String txt,long doc_id,String [] Importants) throws Exception
  {
-	 System.out.println("enter run");
-	// System.out.println(txt);
-	    String Expression = "";
-	    int pos=0;
-	    int start_pos=0;
-	    int end_pos=0;
-//////////////////////////////////////parse html file /////////////////////////////////
-		String w,sw,w1;
-		long WID=0,SWID=0;
-		boolean WordExist,SWordExist;
-		int importantW,importantSW;
-		System.out.println("abl l mapppppppp");
-	    Map<Pair,String> Originalwords = new HashMap<Pair,String>();
-	    Map<Pair,Pair> words = new HashMap<Pair,Pair>();
-
-	    System.out.println("b3d map l words");
-	    Map<Pair,Integer> expressionsMap = new HashMap<Pair,Integer>(); //Pair.left->l expression,Pair.right->importance,integer->count
-
-	    System.out.println("b3d map l exoressions");
-	    String position="";
         String[] parts = txt.split("\\P{Alpha}+");
-        Pair<String,Integer> pSW;
-        Pair<String,Integer> pW;
+	    String Expression = "",position="",Phrase="",First_Stop_Word="",w,sw;
+	    int pos=0,importantW,importantSW;
+		boolean WordExist,SWordExist;
+	    Map<Pair<String,Integer>,Pair<String,String>> words = new HashMap<Pair<String,Integer>,Pair<String,String>>();
+        Pair<String,Integer> pSW,pW;
         Pair<String,String> PosStem;
+	    //////////////////////////////////////parse html file /////////////////////////////////
 
 		while(pos<parts.length)
 		{
-			//System.out.println("posssssss"+pos);
-		//	System.out.println("while");
-			String Phrase="";
+			Phrase="";
 			Expression = "";
-			String First_Stop_Word="";
+			First_Stop_Word="";
 			w=parts[pos].toLowerCase();
 			if(w.equals(""))
-				{
+			{
 				pos++;
 				continue;
-				}
-
+			}
 			if(!stopwords.contains(w))
 			{
 				if(w.equals(""))
 					continue;
+				///////////////////////// importantW is the importance of the word////////////////////
 				importantW=Importance(Importants,w);
-				pW=Pair.of(w,importantW);
-			//	System.out.println(pW.getLeft());
-				//System.out.println(pW.getRight());
+				pW=Pair.of(w,importantW);    /////pW is the pair of (the word , importance)
 				WordExist=words.containsKey(pW);
-				///////////////////////////////////////////////////////////////////////////////////////
-				//stemming
+				////////////////// sw is the stemming of the word/////////////////////////////////////
 				sw=Stemmer(w);
+				///////////////// importantSW is the importance of the word after stemming ///////////
 				importantSW=Importance(Importants,sw);
-				pSW=Pair.of(sw,importantSW);
+				pSW=Pair.of(sw,importantSW);        /////pSW is the pair of (the word after stemming , importance)
 				SWordExist=words.containsKey(pSW);
-				
-				/////lw msh bysaww b3d wl etnen msh mawgoden n7ot el sw w n7ot el w wl stemmingid bta3ha
+				////////If the word != the word after the stemming and both of them doesn't exist add them///////////////////
 				if(!w.equals(sw)&&!WordExist&&!SWordExist)
 				{
 					/// insert the stemming and the word
 					if(!sw.equals(""))
-					{
-						words.put(pSW,Pair.of("NO","NULL"));
-					}
-					//	Originalwords.put(pSW,"NO");  // ("NO") Donot Insert It Into Position
+						words.put(pSW,Pair.of("","NULL"));
 					position=","+Integer.toString(pos);
 					PosStem=Pair.of(position,sw);
 					words.put(pW,PosStem);
 				}
+				//////If the word != the word after the stemming but the word after the stemming is exist just add the word/////
 				else if(!w.equals(sw)&&!WordExist&&SWordExist)
 				{
 					// insert the word
@@ -177,23 +129,23 @@ public static String Stemmer(String word)
 					PosStem=Pair.of(position,sw);
 					words.put(pW,PosStem);
 				}
+				//////If the word = the word after the stemming and it is not exist add it//////////////////////
 				else if(w.equals(sw)&&!WordExist&&!SWordExist)
 				{
 					// insert one of them
 					position=","+Integer.toString(pos);
-				//	Originalwords.put(pSW,position);
 					words.put(pSW,Pair.of(position,"NULL"));
 
 				}
+				//////If the word = the word after the stemming and it is exist just add the new position //////
 				else if(SWordExist&&w.equals(sw))
 				{
 					// add the new position
-					//position=Originalwords.get(pSW)+","+Integer.toString(pos);
-				//	Originalwords.put(pSW,position);
 					position=words.get(pSW).getLeft()+","+Integer.toString(pos);
 					words.put(pSW,Pair.of(position,"NULL"));
 
 				}
+				/////If the word != the word after the stemming and they are exist add the new position for the word////////// 
 				else if(WordExist&&!w.equals(sw))
 				{
 					// add the new position
@@ -205,78 +157,78 @@ public static String Stemmer(String word)
 				pos=pos+1;
 
 			  }
-			else
+			else 	//////////////////////////////////Handleing_Stop_Words//////////////////////////////
 			{
-	////////////////////////////////////////Handleing_Stop_Words///////////////////////////////////////
 				Phrase="";
+				/////////////////////////////////Ignore these words ///////////////////////////////////////
 				if ((!w.equals("a")&&!w.equals("an")&&!w.equals("the")&&!w.equals("is")&&!w.equals("if")&&!w.equals("were")&&!w.equals("was")&&!w.equals("i")&&!w.equals("of")&&!w.equals("and")&&!w.equals("in")&&!w.equals("it")&&!w.equals("us")&&!w.equals("our")&&!w.equals("in")&&!w.equals("your")&&!w.equals("you")&&!w.equals("yours")&&!w.equals("on")))
-					{
-				First_Stop_Word=w;
-				//System.out.println("First_Stop_Word----------------->"+w);
-				start_pos=pos;
-				pos++;
-					}
+				{
+					First_Stop_Word=w;
+					pos++;
+				}
 				else
 				{
 					pos++;
 					continue;
 				}
-				
 				if(pos<parts.length)
-					{
+				{
 					w=parts[pos].toLowerCase();
-					Boolean d=stopwords.contains(w);
-				   while (pos<parts.length&&stopwords.contains(w)&&(!w.equals("a")&&!w.equals("an")&&!w.equals("the")&&!w.equals("is")&&!w.equals("if")&&!w.equals("were")&&!w.equals("was")&&!w.equals("i")&&!w.equals("of")&&!w.equals("and")&&!w.equals("in")&&!w.equals("it")&&!w.equals("us")&&!w.equals("our")&&!w.equals("in")&&!w.equals("your")&&!w.equals("you")&&!w.equals("yours")&&!w.equals("on")))
-						{
-						//System.out.println("b3d kedaaaaaaaaa---------->"+w);
-					     w=parts[pos].toLowerCase();
+					///////////////////////////// Phrase = Expressions ////////////////////////////////
+					while (pos<parts.length&&stopwords.contains(w)&&(!w.equals("a")&&!w.equals("an")&&!w.equals("the")&&!w.equals("is")&&!w.equals("if")&&!w.equals("were")&&!w.equals("was")&&!w.equals("i")&&!w.equals("of")&&!w.equals("and")&&!w.equals("in")&&!w.equals("it")&&!w.equals("us")&&!w.equals("our")&&!w.equals("in")&&!w.equals("your")&&!w.equals("you")&&!w.equals("yours")&&!w.equals("on")))
+					{
+						w=parts[pos].toLowerCase();
 					     if(!w.equals("")&&!w.equals(" "))
-						   {
 					    	 Phrase=Phrase+" "+w;
-						   }
 						 pos++;
 						if(pos<parts.length)
 							 w=parts[pos].toLowerCase();
 						else 
 							break;
-						}
-			   }
-		    	if(Phrase.length()>1)
-					{  
-						long EID;
-						int important,count;
-						Expression=First_Stop_Word+Phrase;
-						//System.out.println("expressionnnnnnnn------>"+Expression);
-						important=Importance(Importants,Expression);
-						Pair<String,Integer> p=Pair.of(Expression,important);
-						end_pos=pos;
-						if(expressionsMap.containsKey(p))   //l kelma mogoda 2bl keda
-							{
-							count=expressionsMap.get(p);
-							count++;
-							}
-						else
-							{
-							count=1;           //l kelma msh mogoda 2bl keda
-							}
-						
-						if(!Expression.equals(""))
-						expressionsMap.put(Pair.of(Expression,important),count);  
-			        }
+					}
+				}
+				if(Phrase.length()>1)
+				{
+					int important;
+					String LastCount;
+					Expression=First_Stop_Word+Phrase;
+					important=Importance(Importants,Expression);
+					String Value=expressionsMap.get(Expression);
+					if(expressionsMap.containsKey(Expression))   //If this expression is exist in the map
+					{											
+				        String[] ExPerDoc = Value.split(",");
+				        LastCount=ExPerDoc[ExPerDoc.length-3];
+				     // If this expression is exist in the same file
+				        if(LastCount.equals(Long.toString(doc_id)))
+				        {
+				        	LastCount=Integer.toString((Integer.parseInt(LastCount)+1));
+				        	Value=Value.substring(0,Value.lastIndexOf(','));
+				        	Value=Value+","+LastCount;
+				        }
+				        //////////////////////If it is the first time in this document
+				        else
+				        {
+					        Value=Value+","+Long.toString(doc_id)+","+Integer.toString(important)+",1";
+				        }
+					}
+					else                                //If this the first time for this expression
+					{
+						Value=Long.toString(doc_id)+","+Integer.toString(important)+",1";
+					}
+					if(!Expression.equals(""))
+						expressionsMap.put(Expression,Value);   
+				}
 				else 
 					Phrase="";	
-			}
-			
+			}		
 	   }
-		System.out.println("5alst l whileeeeeeeeee");
-	//   db.InsOriginalWords(Originalwords,doc_id);
-	   db.InsWords(words,doc_id);
-		System.out.println("expressionssssssssssssssssss");
-	   db.InsExpressions(expressionsMap, doc_id);
-	   System.out.println("5alst l insert");
-	   Originalwords.clear();
-		 System.out.println("fffffffffffffffffffffffffffffff");
+	   DATABASE.InsWords(words,doc_id);                    // Insert the words into the database  
+	   words.clear();
 
+ }
+ public static void InsEx() throws Exception
+ {
+ 	DATABASE.InsExpressions(expressionsMap);   // Insert the expressions into the database
  }
 }
 
