@@ -368,7 +368,7 @@ public class DATABASE {
         		else   //expression is not in the table of expressionscount
         		{
 
-               	 statement = conn.prepareStatement("insert into `expressionscounts` (`Expression_id`,`E_Details`) values('"+EID+"',NULL,'"+Value+"')");
+               	 statement = conn.prepareStatement("insert into `expressionscounts` (`Expression_id`,`E_Details`) values('"+EID+"','"+Value+"')");
                	 statement.execute();
         		}	
     		}
@@ -379,7 +379,7 @@ public class DATABASE {
     	        statement.execute();
     			EID=GetExpressionID(Key);
     			//insert in table expressionscount
-    			statement = conn.prepareStatement("insert into `expressionscounts` (`Expression_id`,`E_Details`) values('"+EID+"',NULL,'"+Value+"')");
+    			statement = conn.prepareStatement("insert into `expressionscounts` (`Expression_id`,`E_Details`) values('"+EID+"','"+Value+"')");
               	 statement.execute();
     		}
     		
