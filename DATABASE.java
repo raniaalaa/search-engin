@@ -1,26 +1,18 @@
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.sql.Connection;
-import java.sql.ResultSetMetaData;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.ResultSet;
 import java.io.*;
 import java.sql.Statement;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Scanner;
 import org.apache.commons.lang3.tuple.Pair;
 
 //import org.apache.commons.lang3.Pair;
 
-import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.net.MalformedURLException;
 
@@ -31,7 +23,7 @@ public class DATABASE {
     public DATABASE() {
         try {
             Class.forName("com.mysql.jdbc.Driver");
-            String url = "jdbc:mysql://localhost:3306/Search Engine";
+            String url = "jdbc:mysql://localhost:3306/searchengine";
             conn = DriverManager.getConnection(url, "root", "");
             System.out.println("conn built");
         } catch (SQLException e) {
@@ -217,39 +209,39 @@ public class DATABASE {
     }
     public static Boolean CheckWordInDoc(String Word,long DocId) throws Exception
     {
-    	long WID=GetWordID(Word); 
-        String queryCheck = "SELECT * from `wordpositions` WHERE w_id = '"+WID+"' and doc_id = '"+DocId+"'";
+    	//long WID=GetWordID(Word); 
+        String queryCheck = "SELECT * from `word` WHERE word = '"+Word+"' and doc_id = '"+DocId+"'";
         PreparedStatement statement = conn.prepareStatement(queryCheck);
         ResultSet resultSet = statement.executeQuery();
         return (resultSet.next());
     }
     public static Boolean CheckExpressionInDoc(String Expression,long DocId) throws Exception
     {
-    	long EID=GetWordID(Expression); 
+    	long EID=GetExpressionID(Expression); 
         String queryCheck = "SELECT * from `expressionscounts` WHERE Expression_id = '"+EID+"' and Doc_id = '"+DocId+"'";
         PreparedStatement statement = conn.prepareStatement(queryCheck);
         ResultSet resultSet = statement.executeQuery();
         return (resultSet.next());
     }
     //Check if the expression exists in expression table
-    public static Boolean CheckExpressionExistance(String Expression) throws Exception
+   /* public static Boolean CheckExpressionExistance(String Expression) throws Exception
     {
         String queryCheck = "SELECT * from `Expressions` WHERE Expression = '"+Expression+"'";
         PreparedStatement statement = conn.prepareStatement(queryCheck);
         ResultSet resultSet = statement.executeQuery();
         return (resultSet.next());
 
-    }
+    }*/
     ///check existance in expressionscount
-    public static Boolean CheckExpressionCountExistance(long EID) throws Exception
+    public static Boolean CheckExpressionCountExistance(String Expression) throws Exception
     {
-        String queryCheck = "SELECT * from `expressionscount` WHERE Expression_id = '"+EID+"'";
+        String queryCheck = "SELECT * from `expressionscounts` WHERE Expression = '"+Expression+"'";
         PreparedStatement statement = conn.prepareStatement(queryCheck);
         ResultSet resultSet = statement.executeQuery();
         return (resultSet.next());
 
     }
-    public static long GetWordID(String Word) throws Exception
+   /* public static long GetWordID(String Word) throws Exception
     {
         String queryCheck = "SELECT Wid from `Word` WHERE word = '"+Word+"'";
         PreparedStatement statement = conn.prepareStatement(queryCheck);
@@ -259,7 +251,7 @@ public class DATABASE {
             return (result.getLong("Wid"));
         else
             return -1;
-    }
+    }*/
     public static long GetExpressionID(String Expression) throws Exception
     {
         String queryCheck = "SELECT E_ID from `Expressions` WHERE Expression = '"+Expression+"'";
@@ -273,8 +265,8 @@ public class DATABASE {
     }
     public static String GetPosition(String Word,long DOCID) throws Exception
     {
-    	long WID=GetWordID(Word);
-    	String queryCheck = "SELECT `position` from `wordpositions` WHERE w_id = '"+WID+"' and doc_id = '"+DOCID+"'";
+    	//long WID=GetWordID(Word);
+    	String queryCheck = "SELECT `positions` from `word` WHERE word = '"+Word+"' and doc_id = '"+DOCID+"'";
         PreparedStatement statement = conn.prepareStatement(queryCheck);
         ResultSet resultSet = statement.executeQuery();
         String value="";
@@ -285,24 +277,22 @@ public class DATABASE {
     }
     public static int GetImportance(String Word,long DOCID) throws Exception
     {
-    	long WID=GetWordID(Word);
-    	String queryCheck = "SELECT `importance` from `wordpositions` WHERE w_id = '"+WID+"' and doc_id = '"+DOCID+"'";
+    	//long WID=GetWordID(Word);
+    	String queryCheck = "SELECT `importance` from `word` WHERE word = '"+Word+"' and doc_id = '"+DOCID+"'";
         PreparedStatement statement = conn.prepareStatement(queryCheck);
         ResultSet resultSet = statement.executeQuery();
         int value=1;
         if (resultSet.next())
         {
             value= Integer.parseInt(resultSet.getString(1));
-            System.out.println(value);
         }
         return value;	
     }
     public static void InsWords(Map<Pair<String, Integer>, Pair<String, String>> words,long DocID) throws Exception
     {      
-        PreparedStatement statement;
-        Pair<String,Integer> Key;     //KeyPair.left->word       , //KeyPair.right->importance
-        Pair<String,String> Value;    //ValuePair.left->position , //ValuePair.right->stemming
-        long WID;
+        Statement statement=conn.createStatement();
+        Pair<String,Integer> Key;     //Key.getLeft()->word       , //Key.getRight()->importance
+        Pair<String,String> Value;    //Value.getLeft()->position , //Value.getRight()->stemming
         for (Map.Entry<Pair<String,Integer>, Pair<String,String>> entry: words.entrySet())
         {
         	Key = entry.getKey();             
@@ -311,39 +301,38 @@ public class DATABASE {
             {
             	 if(CheckWordInDoc(Key.getLeft(),DocID))//check if the word was in the document before updating
                  {
-                 	 WID=GetWordID(Key.getLeft());
      	                ///////////////check if position changed///////////////
-     	           	 if(!Value.getLeft().equals(GetPosition(Key.getLeft(),DocID)))
+     	           	 if(!Value.getLeft().equals(GetPosition(Key.getLeft(),DocID))&&!Value.getLeft().equals(""))
      	           	 {
-     	           		 statement = conn.prepareStatement("UPDATE `wordpositions` SET `position`='"+Value.getLeft()+"' WHERE w_id='"+WID+"' and doc_id ='"+DocID+"'");
-     	           	     statement.execute();
+     	           		 //////////////////a3del hena///////////////////////////////////////////
+     	           		// statement = conn.prepareStatement("UPDATE `word` SET `positions`='"+Value.getLeft()+"' WHERE word='"+Key.getLeft()+"' and doc_id ='"+DocID+"'");
+     	           	     statement.executeUpdate("UPDATE `word` SET `positions`='"+Value.getLeft()+"' WHERE word='"+Key.getLeft()+"' and doc_id ='"+DocID+"'");
      	           	 }	
      	           	 ///////////////check if importance changed///////////////
-     	           	 if(Key.getRight()!=GetImportance(Key.getLeft(),DocID))
+     	           	 if(Key.getRight()!=GetImportance(Key.getLeft(),DocID)&&!Value.getLeft().equals(""))
      	           	 {
-     	           		 statement = conn.prepareStatement("UPDATE `wordpositions` SET `importance`='"+Key.getRight()+"' WHERE w_id='"+WID+"' and doc_id ='"+DocID+"'");
-     	           	     statement.execute();
+     	           		 //statement = conn.prepareStatement("UPDATE `word` SET `importance`='"+Key.getRight()+"' WHERE word='"+Key.getLeft()+"' and doc_id ='"+DocID+"'");
+     	           	     statement.executeUpdate("UPDATE `word` SET `importance`='"+Key.getRight()+"' WHERE word='"+Key.getLeft()+"' and doc_id ='"+DocID+"'");
      	           	 }	
      	           	 
                  }
-            	 else    //the word isn't in the document
+            	 else    //the word wasn't in the document
                  {
      	           	 if(!Value.getLeft().equals(""))
      	                {
-     		     	        WID=GetWordID((String)Key.getLeft());
-     		     	        statement = conn.prepareStatement("insert into `wordpositions` (`w_id`,`doc_id`,`position`,`importance`) values("+WID+","+DocID+",'"+Value.getLeft()+"','"+(int)Key.getRight()+"')");
-     		     	        statement.execute();
+     		     	        //////////////////l mafrod ashof l stemming
+     	           		 //a3mel check l awel hya l kelma stemming wla la2
+     		     	       // statement = conn.prepareStatement("insert into `word` (`word`,`doc_id`,`positions`,`stemming`,`importance`) values("+(String)Key.getLeft()+","+DocID+",'"+Value.getLeft()+"','"+Value.getRight()+"','"+(int)Key.getRight()+"')");
+     		     	        statement.executeUpdate("insert into `word` (`word`,`doc_id`,`positions`,`stemming`,`importance`) values('"+(String)Key.getLeft()+"','"+DocID+"','"+Value.getLeft()+"','"+Value.getRight()+"','"+(int)Key.getRight()+"')");
      	                }
                  }
             	
             } //the word isn't inserted before in the database
             else
             {
-            	
-		            	 statement = conn.prepareStatement("insert into `Word` (`word`,`Wid`,`Stemming`) values('"+(String)Key.getLeft()+"',NULL,'"+(String)Value.getRight()+"')");
-		            	 WID=GetWordID((String)Key.getLeft());
-  		     	         statement = conn.prepareStatement("insert into `wordpositions` (`w_id`,`doc_id`,`position`,`importance`) values("+WID+","+DocID+",'"+Value.getLeft()+"','"+(int)Key.getRight()+"')");
-  		     	         statement.execute();
+            	//Value.getLeft()->position , //Value.getRight()->stemming
+            	   // statement = conn.prepareStatement("insert into `word` (`word`,`doc_id`,`positions`,`stemming`,`importance`) values("+(String)Key.getLeft()+","+DocID+",'"+Value.getLeft()+"','"+Value.getRight()+"','"+(int)Key.getRight()+"')");
+	     	        statement.executeUpdate("insert into `word` (`word`,`doc_id`,`positions`,`stemming`,`importance`) values('"+(String)Key.getLeft()+"','"+DocID+"','"+Value.getLeft()+"','"+Value.getRight()+"','"+(int)Key.getRight()+"')");
             	
             }
        
@@ -352,37 +341,21 @@ public class DATABASE {
     public static void InsExpressions(Map<String, String> expressionsMap) throws Exception
     {
     	PreparedStatement statement;
-    	long EID;
     	for (Entry<String, String> entry: expressionsMap.entrySet())
 	    { 
     		String Key=entry.getKey();
     		String Value=entry.getValue();
-    		if(CheckExpressionExistance(Key))
-    		{
-    			EID=GetExpressionID(Key);
-    			if(CheckExpressionCountExistance(EID)) //expression is in the table of expressionscount
+    			if(CheckExpressionCountExistance(Key)) //expression is in the table of expressionscount
         		{
-        			statement = conn.prepareStatement("UPDATE `expressionscounts` SET `E_Details`='"+Value+"' WHERE Expression_id='"+EID+"'");
+        			statement = conn.prepareStatement("UPDATE `expressionscounts` SET `E_Details`='"+Value+"' WHERE Expression='"+Key+"'");
               	    statement.execute();
         		}	
         		else   //expression is not in the table of expressionscount
         		{
 
-               	 statement = conn.prepareStatement("insert into `expressionscounts` (`Expression_id`,`E_Details`) values('"+EID+"','"+Value+"')");
+               	 statement = conn.prepareStatement("insert into `expressionscounts` (`Expression`,`E_Details`) values('"+Key+"','"+Value+"')");
                	 statement.execute();
         		}	
-    		}
-    		else
-    		{
-    			//insert in table expressions
-    			statement = conn.prepareStatement("insert into `expressions` (`Expression`,`E_ID`) values('"+Key+"',NULL)");
-    	        statement.execute();
-    			EID=GetExpressionID(Key);
-    			//insert in table expressionscount
-    			statement = conn.prepareStatement("insert into `expressionscounts` (`Expression_id`,`E_Details`) values('"+EID+"','"+Value+"')");
-              	 statement.execute();
-    		}
-    		
 	    }
     	
     }

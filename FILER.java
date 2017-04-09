@@ -22,7 +22,7 @@ public class FILER {
 		String [] Importants={"","",""}; //first element is the title,second is all headers,third is img alt
 		org.jsoup.nodes.Document doc=Jsoup.parse(f, "UTF-8");
 		Importants[0]=doc.title(); //get the title of the file
-		Text=Text+" "+doc.title(); 
+		//Text=Text+" "+doc.title(); 
 	    String tag="h";
 	    String All_Headers="";
 		Elements Header;

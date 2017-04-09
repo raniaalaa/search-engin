@@ -69,6 +69,19 @@ public static int Importance(String [] importance,String word)
 	return 1;                                                       ///Else ->1
 	 
 }
+
+////////////////////////////////Get the importance of an expression////////////////////////////////////////////
+public static int Expression_Importance(String [] importance,String expression) 
+{
+	if(importance[0].contains(expression))
+		return 4;
+	if(importance[1].contains(expression))
+		return 3;
+	if(importance[2].contains(expression))
+		return 2;
+	return 1;                                                       ///Else ->1
+
+}
 /////////////////////////////////Get the stemming of a word//////////////////////////////////////////
 public static String Stemmer(String word)
 {
@@ -77,6 +90,7 @@ public static String Stemmer(String word)
  /////////////////////////////////////Run the indexer//////////////////////////////////////////////
  public static void Run(String txt,long doc_id,String [] Importants) throws Exception
  {
+	    System.out.println(txt);
         String[] parts = txt.split("\\P{Alpha}+");
 	    String Expression = "",position="",Phrase="",First_Stop_Word="",w,sw;
 	    int pos=0,importantW,importantSW;
@@ -192,14 +206,19 @@ public static String Stemmer(String word)
 					int important;
 					String LastCount;
 					Expression=First_Stop_Word+Phrase;
-					important=Importance(Importants,Expression);
-					String Value=expressionsMap.get(Expression);
+					important=Expression_Importance(Importants,Expression);
+					System.out.println("exp "+Expression);
+					System.out.println("iiiiiiiiiiiiii "+important);
+					String Value="";
+					long LastDoc;
 					if(expressionsMap.containsKey(Expression))   //If this expression is exist in the map
-					{											
+					{							
+						Value=expressionsMap.get(Expression);
 				        String[] ExPerDoc = Value.split(",");
-				        LastCount=ExPerDoc[ExPerDoc.length-3];
+				        LastCount=ExPerDoc[ExPerDoc.length-1];
+				        LastDoc=Long.parseLong(ExPerDoc[ExPerDoc.length-3]);
 				     // If this expression is exist in the same file
-				        if(LastCount.equals(Long.toString(doc_id)))
+				        if(LastDoc==doc_id)
 				        {
 				        	LastCount=Integer.toString((Integer.parseInt(LastCount)+1));
 				        	Value=Value.substring(0,Value.lastIndexOf(','));
