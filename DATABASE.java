@@ -275,6 +275,11 @@ public class DATABASE {
         }
         return value;	
     }
+    public static void DeleteNotUpdated(long DOCID) throws Exception
+    {
+    	Statement statement=conn.createStatement();
+    	statement.executeUpdate("DELETE FROM `word` WHERE doc_id = '"+DOCID+"' and updated=0");
+    }
     public static int GetImportance(String Word,long DOCID) throws Exception
     {
     	//long WID=GetWordID(Word);
@@ -304,17 +309,13 @@ public class DATABASE {
      	                ///////////////check if position changed///////////////
      	           	 if(!Value.getLeft().equals(GetPosition(Key.getLeft(),DocID))&&!Value.getLeft().equals(""))
      	           	 {
-     	           		 //////////////////a3del hena///////////////////////////////////////////
-     	           		// statement = conn.prepareStatement("UPDATE `word` SET `positions`='"+Value.getLeft()+"' WHERE word='"+Key.getLeft()+"' and doc_id ='"+DocID+"'");
-     	           	     statement.executeUpdate("UPDATE `word` SET `positions`='"+Value.getLeft()+"' WHERE word='"+Key.getLeft()+"' and doc_id ='"+DocID+"'");
+     	           	     statement.executeUpdate("UPDATE `word` SET `positions`='"+Value.getLeft()+"',`updated`=1 WHERE word='"+Key.getLeft()+"' and doc_id ='"+DocID+"'");
      	           	 }	
      	           	 ///////////////check if importance changed///////////////
      	           	 if(Key.getRight()!=GetImportance(Key.getLeft(),DocID)&&!Value.getLeft().equals(""))
      	           	 {
-     	           		 //statement = conn.prepareStatement("UPDATE `word` SET `importance`='"+Key.getRight()+"' WHERE word='"+Key.getLeft()+"' and doc_id ='"+DocID+"'");
-     	           	     statement.executeUpdate("UPDATE `word` SET `importance`='"+Key.getRight()+"' WHERE word='"+Key.getLeft()+"' and doc_id ='"+DocID+"'");
+     	           	     statement.executeUpdate("UPDATE `word` SET `importance`='"+Key.getRight()+"',`updated`=1 WHERE word='"+Key.getLeft()+"' and doc_id ='"+DocID+"'");
      	           	 }	
-     	           	 
                  }
             	 else    //the word wasn't in the document
                  {
@@ -323,16 +324,15 @@ public class DATABASE {
      		     	        //////////////////l mafrod ashof l stemming
      	           		 //a3mel check l awel hya l kelma stemming wla la2
      		     	       // statement = conn.prepareStatement("insert into `word` (`word`,`doc_id`,`positions`,`stemming`,`importance`) values("+(String)Key.getLeft()+","+DocID+",'"+Value.getLeft()+"','"+Value.getRight()+"','"+(int)Key.getRight()+"')");
-     		     	        statement.executeUpdate("insert into `word` (`word`,`doc_id`,`positions`,`stemming`,`importance`) values('"+(String)Key.getLeft()+"','"+DocID+"','"+Value.getLeft()+"','"+Value.getRight()+"','"+(int)Key.getRight()+"')");
+     		     	        statement.executeUpdate("insert into `word` (`word`,`doc_id`,`positions`,`stemming`,`importance`,`updated`) values('"+(String)Key.getLeft()+"','"+DocID+"','"+Value.getLeft()+"','"+Value.getRight()+"','"+(int)Key.getRight()+"',1)");
      	                }
                  }
-            	
             } //the word isn't inserted before in the database
             else
             {
             	//Value.getLeft()->position , //Value.getRight()->stemming
             	   // statement = conn.prepareStatement("insert into `word` (`word`,`doc_id`,`positions`,`stemming`,`importance`) values("+(String)Key.getLeft()+","+DocID+",'"+Value.getLeft()+"','"+Value.getRight()+"','"+(int)Key.getRight()+"')");
-	     	        statement.executeUpdate("insert into `word` (`word`,`doc_id`,`positions`,`stemming`,`importance`) values('"+(String)Key.getLeft()+"','"+DocID+"','"+Value.getLeft()+"','"+Value.getRight()+"','"+(int)Key.getRight()+"')");
+	     	        statement.executeUpdate("insert into `word` (`word`,`doc_id`,`positions`,`stemming`,`importance`,`updated`) values('"+(String)Key.getLeft()+"','"+DocID+"','"+Value.getLeft()+"','"+Value.getRight()+"','"+(int)Key.getRight()+"',1)");
             	
             }
        

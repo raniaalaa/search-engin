@@ -241,7 +241,8 @@ public static String Stemmer(String word)
 					Phrase="";	
 			}		
 	   }
-	   DATABASE.InsWords(words,doc_id);                    // Insert the words into the database  
+	   DATABASE.InsWords(words,doc_id);                    // Insert the words into the database 
+	   DATABASE.DeleteNotUpdated(doc_id);
 	   words.clear();
 
  }

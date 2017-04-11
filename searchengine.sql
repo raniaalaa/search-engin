@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 09, 2017 at 08:39 PM
+-- Generation Time: Apr 11, 2017 at 08:12 PM
 -- Server version: 5.7.14
 -- PHP Version: 5.6.25
 
@@ -8933,7 +8933,8 @@ CREATE TABLE `word` (
   `Doc_id` bigint(20) NOT NULL,
   `Positions` text NOT NULL,
   `Stemming` varchar(50) NOT NULL,
-  `importance` int(11) NOT NULL
+  `importance` int(11) NOT NULL,
+  `updated` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
@@ -8964,7 +8965,8 @@ ALTER TABLE `restrictedurls`
 ALTER TABLE `word`
   ADD PRIMARY KEY (`Word`,`Doc_id`),
   ADD KEY `word` (`Word`),
-  ADD KEY `Doc_id` (`Doc_id`);
+  ADD KEY `Doc_id` (`Doc_id`),
+  ADD KEY `index_word` (`Word`);
 
 --
 -- AUTO_INCREMENT for dumped tables
