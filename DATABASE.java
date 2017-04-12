@@ -293,6 +293,23 @@ public class DATABASE {
         }
         return value;	
     }
+    public static int wordsCount() throws SQLException
+    {
+      String queryCheck = "SELECT COUNT(*) FROM word";
+      PreparedStatement statement = conn.prepareStatement(queryCheck);
+      ResultSet resultSet = statement.executeQuery();
+      int value=1;
+      if (resultSet.next())
+      {
+          value= Integer.parseInt(resultSet.getString(1));
+      }
+      return value;	
+    }
+    public static void rstUpdated() throws SQLException
+    {
+    	Statement statement=conn.createStatement();
+    	statement.executeUpdate("update word set updated = 0 where 1 = 1");
+    }
     public static void InsWords(Map<Pair<String, Integer>, Pair<String, String>> words,long DocID) throws Exception
     {      
         Statement statement=conn.createStatement();
