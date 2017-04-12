@@ -89,7 +89,9 @@ public static String Stemmer(String word)
 }
  /////////////////////////////////////Run the indexer//////////////////////////////////////////////
  public static void Run(String txt,long doc_id,String [] Importants) throws Exception
- {
+ {      
+	    if(DATABASE.wordsCount()>0)
+	    	DATABASE.rstUpdated();
 	    System.out.println(txt);
         String[] parts = txt.split("\\P{Alpha}+");
 	    String Expression = "",position="",Phrase="",First_Stop_Word="",w,sw;
