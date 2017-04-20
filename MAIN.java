@@ -1,20 +1,24 @@
-//main
-///package project;
-
+import java.awt.List;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Map.Entry;
+
 
 public class MAIN extends TimerTask {
 
     public void run() {
+    	//System.out.println("2bl");
        DATABASE db=new DATABASE();
         ////////////////////////////////////////////
-        Scanner reader = new Scanner(System.in);  // Reading from System.in
+     /*   Scanner reader = new Scanner(System.in);  // Reading from System.in
         System.out.println("Enter the number of threads between 1 and 20: ");
         int size=0; ;
 
@@ -50,11 +54,11 @@ public class MAIN extends TimerTask {
             // TODO Auto-generated catch block
             e1.printStackTrace();
         }
-
+*/
         INDEXER I=new INDEXER();
         File input = new File("html");  // pages in folder "html" // 
         File[] st = input.listFiles();
-        System.out.println(st.length);
+       // System.out.println(st.length);
         String [] Importance={"","",""};
         FILER filer=new FILER();
         long doc_id;
@@ -62,12 +66,36 @@ public class MAIN extends TimerTask {
         {
              String FileName=st[i].getName().replace(".html","");
              doc_id=Long.parseLong(FileName);
-             Importance = filer.Dealing_Files(st[i]);
-            I.Run(FILER.GetText(),doc_id,Importance);
+             try {
+				Importance = filer.Dealing_Files(st[i]);
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+            try {
+				I.Run(FILER.GetText(),doc_id,Importance);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
             System.out.println(doc_id+" "+st[i].getName()+" "+i);
           //  break;
          }
-    	INDEXER.InsEx();   // Insert the expressions into the database
+    	try {
+			INDEXER.InsEx();
+			System.out.println("insert word you want to search");
+			Scanner reader = new Scanner(System.in);
+			String word=reader.nextLine(); ;
+			//get docs contain the word
+			Integer[] Docs=RANKER.Ranking(word);
+			for(int i=0;i<Docs.length;i++)
+			{
+				System.out.println(Docs[i]);
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}   // Insert the expressions into the database
     }
 
 }
@@ -90,19 +118,17 @@ class MAINAPP
         Calendar date = Calendar.getInstance();
         date.set(
                 Calendar.DAY_OF_WEEK,
-                Calendar.FRIDAY
+                Calendar.SUNDAY
         );
         date.set(Calendar.HOUR, 0);
         date.set(Calendar.MINUTE, 0);
         date.set(Calendar.SECOND, 0);
         date.set(Calendar.MILLISECOND, 0);
-        //date.getTime()
+      
         timer.schedule(
-                new MAIN(),date.getTime()
-                ,
+                new MAIN(),date.getTime(),
                 1000 * 60 * 60 * 24 * 2 );
 
 
     }//Main method ends
 }
-

@@ -92,22 +92,25 @@ public static String Stemmer(String word)
  {      
 	    if(DATABASE.wordsCount()>0)
 	    	DATABASE.rstUpdated();
-	    System.out.println(txt);
+	    int wordCount=1,swordCount=1;
+	    long docSize=0;
         String[] parts = txt.split("\\P{Alpha}+");
 	    String Expression = "",position="",Phrase="",First_Stop_Word="",w,sw;
 	    int pos=0,importantW,importantSW;
 		boolean WordExist,SWordExist;
-	    Map<Pair<String,Integer>,Pair<String,String>> words = new HashMap<Pair<String,Integer>,Pair<String,String>>();
-        Pair<String,Integer> pSW,pW;
-        Pair<String,String> PosStem;
+		//first string->word,integer->importance,string->positions,string->stemming,integer->count
+	    Map<Pair<String,Integer>,Pair<String,Pair<String,Integer>>> words = new HashMap<Pair<String,Integer>,Pair<String,Pair<String,Integer>>>();
+        Pair<String,Integer> pSW;
+		Pair<String,Integer> pW;
+        Pair<String, Pair<String, Integer>> PosStem;
 	    //////////////////////////////////////parse html file /////////////////////////////////
-
 		while(pos<parts.length)
 		{
 			Phrase="";
 			Expression = "";
 			First_Stop_Word="";
 			w=parts[pos].toLowerCase();
+			docSize++;
 			if(w.equals(""))
 			{
 				pos++;
@@ -119,8 +122,16 @@ public static String Stemmer(String word)
 					continue;
 				///////////////////////// importantW is the importance of the word////////////////////
 				importantW=Importance(Importants,w);
-				pW=Pair.of(w,importantW);    /////pW is the pair of (the word , importance)
+				pW=Pair.of(w,importantW);    /////pW is the pair of (the word , pair of(importance,count))
 				WordExist=words.containsKey(pW);
+				if(WordExist)
+				{
+					wordCount=words.get(pW).getRight().getRight()+1;
+				}
+				else
+				{
+					wordCount=1;
+				}
 				////////////////// sw is the stemming of the word/////////////////////////////////////
 				sw=Stemmer(w);
 				///////////////// importantSW is the importance of the word after stemming ///////////
@@ -132,17 +143,19 @@ public static String Stemmer(String word)
 				{
 					/// insert the stemming and the word
 					if(!sw.equals(""))
-						words.put(pSW,Pair.of("","NULL"));
+						words.put(pSW,Pair.of("",Pair.of("NULL",wordCount)));
 					position=","+Integer.toString(pos);
-					PosStem=Pair.of(position,sw);
+					
+					PosStem=Pair.of(position,Pair.of(sw,wordCount));
 					words.put(pW,PosStem);
+					wordCount++;
 				}
 				//////If the word != the word after the stemming but the word after the stemming is exist just add the word/////
 				else if(!w.equals(sw)&&!WordExist&&SWordExist)
 				{
 					// insert the word
 					position=","+Integer.toString(pos);
-					PosStem=Pair.of(position,sw);
+					PosStem=Pair.of(position,Pair.of(sw,wordCount));
 					words.put(pW,PosStem);
 				}
 				//////If the word = the word after the stemming and it is not exist add it//////////////////////
@@ -150,7 +163,7 @@ public static String Stemmer(String word)
 				{
 					// insert one of them
 					position=","+Integer.toString(pos);
-					words.put(pSW,Pair.of(position,"NULL"));
+					words.put(pSW,Pair.of(position,Pair.of("NULL",wordCount)));
 
 				}
 				//////If the word = the word after the stemming and it is exist just add the new position //////
@@ -158,17 +171,15 @@ public static String Stemmer(String word)
 				{
 					// add the new position
 					position=words.get(pSW).getLeft()+","+Integer.toString(pos);
-					words.put(pSW,Pair.of(position,"NULL"));
-
+					words.put(pSW,Pair.of(position,Pair.of("NULL",wordCount)));
 				}
 				/////If the word != the word after the stemming and they are exist add the new position for the word////////// 
 				else if(WordExist&&!w.equals(sw))
 				{
 					// add the new position
 					position=words.get(pW).getLeft()+","+Integer.toString(pos);
-					words.put(pW,Pair.of(position,sw));
+					words.put(pW,Pair.of(position,Pair.of(sw,wordCount)));
 				}
-				
 				///////////////////////////////////////////////////////////////////////////////////////
 				pos=pos+1;
 
@@ -209,8 +220,6 @@ public static String Stemmer(String word)
 					String LastCount;
 					Expression=First_Stop_Word+Phrase;
 					important=Expression_Importance(Importants,Expression);
-					System.out.println("exp "+Expression);
-					System.out.println("iiiiiiiiiiiiii "+important);
 					String Value="";
 					long LastDoc;
 					if(expressionsMap.containsKey(Expression))   //If this expression is exist in the map
@@ -243,7 +252,7 @@ public static String Stemmer(String word)
 					Phrase="";	
 			}		
 	   }
-	   DATABASE.InsWords(words,doc_id);                    // Insert the words into the database 
+	   DATABASE.InsWords(words,doc_id,docSize);                    // Insert the words into the database 
 	   DATABASE.DeleteNotUpdated(doc_id);
 	   words.clear();
 

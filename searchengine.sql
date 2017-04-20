@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 11, 2017 at 08:12 PM
+-- Generation Time: Apr 20, 2017 at 10:27 AM
 -- Server version: 5.7.14
 -- PHP Version: 5.6.25
 
@@ -8934,7 +8934,8 @@ CREATE TABLE `word` (
   `Positions` text NOT NULL,
   `Stemming` varchar(50) NOT NULL,
   `importance` int(11) NOT NULL,
-  `updated` int(11) NOT NULL
+  `updated` int(11) NOT NULL,
+  `TF` double NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --

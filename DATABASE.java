@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.io.*;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -305,56 +306,65 @@ public class DATABASE {
       }
       return value;	
     }
+    public static double getTF(String Word,long doc_id) throws SQLException
+    {
+      String queryCheck = "SELECT `TF` FROM `word` where word='"+Word+"' and doc_id='"+doc_id+"'";
+      PreparedStatement statement = conn.prepareStatement(queryCheck);
+      ResultSet resultSet = statement.executeQuery();
+      double value=1;
+      if (resultSet.next())
+      {
+          value= Double.parseDouble(resultSet.getString(1));
+      }
+      return value;	
+    }
     public static void rstUpdated() throws SQLException
     {
     	Statement statement=conn.createStatement();
     	statement.executeUpdate("update word set updated = 0 where 1 = 1");
     }
-    public static void InsWords(Map<Pair<String, Integer>, Pair<String, String>> words,long DocID) throws Exception
-    {      
+    public static void InsWords(Map<Pair<String,Integer>, Pair<String,Pair<String,Integer>>> words,long DocID,long docSize) throws Exception
+    { 
         Statement statement=conn.createStatement();
-        Pair<String,Integer> Key;     //Key.getLeft()->word       , //Key.getRight()->importance
-        Pair<String,String> Value;    //Value.getLeft()->position , //Value.getRight()->stemming
-        for (Map.Entry<Pair<String,Integer>, Pair<String,String>> entry: words.entrySet())
+        Pair<String,Integer> Key;     //Key.getLeft()->word , //Key.getRight()->importance 
+        Pair<String,Pair<String,Integer>> Value;    //Value.getLeft()->position , //Value.getRight().getLeft()->stemming //Value.getRight().getRight()->wordCount
+        for (Map.Entry<Pair<String,Integer>, Pair<String,Pair<String,Integer>>> entry: words.entrySet())
         {
         	Key = entry.getKey();             
             Value = entry.getValue();
-            if(CheckWordExistance(Key.getLeft()))  //the word is inserted before in the database
-            {
             	 if(CheckWordInDoc(Key.getLeft(),DocID))//check if the word was in the document before updating
                  {
-     	                ///////////////check if position changed///////////////
-     	           	 if(!Value.getLeft().equals(GetPosition(Key.getLeft(),DocID))&&!Value.getLeft().equals(""))
-     	           	 {
-     	           	     statement.executeUpdate("UPDATE `word` SET `positions`='"+Value.getLeft()+"',`updated`=1 WHERE word='"+Key.getLeft()+"' and doc_id ='"+DocID+"'");
-     	           	 }	
-     	           	 ///////////////check if importance changed///////////////
-     	           	 if(Key.getRight()!=GetImportance(Key.getLeft(),DocID)&&!Value.getLeft().equals(""))
-     	           	 {
-     	           	     statement.executeUpdate("UPDATE `word` SET `importance`='"+Key.getRight()+"',`updated`=1 WHERE word='"+Key.getLeft()+"' and doc_id ='"+DocID+"'");
-     	           	 }	
+     	           		 double TF=(double)Value.getRight().getRight()/docSize;
+     	           	     statement.executeUpdate("UPDATE `word` SET `positions`='"+Value.getLeft()+"',`importance`='"+Key.getRight()+"',`updated`=1,`TF`='"+TF+"' WHERE word='"+Key.getLeft()+"' and doc_id ='"+DocID+"'");
                  }
             	 else    //the word wasn't in the document
                  {
      	           	 if(!Value.getLeft().equals(""))
      	                {
-     		     	        //////////////////l mafrod ashof l stemming
-     	           		 //a3mel check l awel hya l kelma stemming wla la2
-     		     	       // statement = conn.prepareStatement("insert into `word` (`word`,`doc_id`,`positions`,`stemming`,`importance`) values("+(String)Key.getLeft()+","+DocID+",'"+Value.getLeft()+"','"+Value.getRight()+"','"+(int)Key.getRight()+"')");
-     		     	        statement.executeUpdate("insert into `word` (`word`,`doc_id`,`positions`,`stemming`,`importance`,`updated`) values('"+(String)Key.getLeft()+"','"+DocID+"','"+Value.getLeft()+"','"+Value.getRight()+"','"+(int)Key.getRight()+"',1)");
+     	           		    double TF=(double)Value.getRight().getRight()/docSize;
+     		     	        statement.executeUpdate("insert into `word` (`word`,`doc_id`,`positions`,`stemming`,`importance`,`updated`,`TF`) values('"+(String)Key.getLeft()+"','"+DocID+"','"+Value.getLeft()+"','"+Value.getRight()+"','"+(int)Key.getRight()+"',1,'"+TF+"')");
      	                }
                  }
-            } //the word isn't inserted before in the database
-            else
-            {
-            	//Value.getLeft()->position , //Value.getRight()->stemming
-            	   // statement = conn.prepareStatement("insert into `word` (`word`,`doc_id`,`positions`,`stemming`,`importance`) values("+(String)Key.getLeft()+","+DocID+",'"+Value.getLeft()+"','"+Value.getRight()+"','"+(int)Key.getRight()+"')");
-	     	        statement.executeUpdate("insert into `word` (`word`,`doc_id`,`positions`,`stemming`,`importance`,`updated`) values('"+(String)Key.getLeft()+"','"+DocID+"','"+Value.getLeft()+"','"+Value.getRight()+"','"+(int)Key.getRight()+"',1)");
-            	
-            }
-       
        }	
  }
+    public static String[] getDocs(String Word) throws SQLException
+    {
+    	List<String> l=new ArrayList();
+    	Statement stmt = conn.createStatement();
+    	ResultSet rs = stmt.executeQuery("select Doc_id from word where `word`='"+Word+"'");
+    	while (rs.next()) {
+    		System.out.println("Doc id");
+    	    System.out.println(rs.getString(1));
+    	    l.add(rs.getString(1));
+    	}
+    	 String[] Docs = (String[]) l.toArray(new String[l.size()]);
+    	return Docs;
+    }
+    
+    
+    
+    
+    
     public static void InsExpressions(Map<String, String> expressionsMap) throws Exception
     {
     	PreparedStatement statement;
@@ -376,6 +386,26 @@ public class DATABASE {
 	    }
     	
     }
-    
-   
+    public static int getwordDocsCount(String w) throws SQLException
+    {
+    	PreparedStatement statement = conn.prepareStatement("select count(distinct Doc_id) from word where word='"+w+"'");
+        ResultSet resultSet = statement.executeQuery();
+        int value=1;
+        if (resultSet.next())
+        {
+            value= Integer.parseInt(resultSet.getString(1));
+        }
+        return value;	
+    }
+    public static int getTotalNumberOfDocs() throws SQLException
+    {
+    	 PreparedStatement statement = conn.prepareStatement("select count(distinct Doc_id) from word");
+         ResultSet resultSet = statement.executeQuery();
+         int value=1;
+         if (resultSet.next())
+         {
+             value= Integer.parseInt(resultSet.getString(1));
+         }
+         return value;	
+    } 
 }
