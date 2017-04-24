@@ -91,7 +91,7 @@ public static String Stemmer(String word)
  public static void Run(String txt,long doc_id,String [] Importants) throws Exception
  {      
 	    if(DATABASE.wordsCount()>0)
-	    	DATABASE.rstUpdated();
+	    	DATABASE.rstUpdated(doc_id);
 	    int wordCount=1,swordCount=1;
 	    long docSize=0;
         String[] parts = txt.split("\\P{Alpha}+");
