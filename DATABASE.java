@@ -318,10 +318,10 @@ public class DATABASE {
       }
       return value;	
     }
-    public static void rstUpdated() throws SQLException
+    public static void rstUpdated(long doc_id) throws SQLException
     {
     	Statement statement=conn.createStatement();
-    	statement.executeUpdate("update word set updated = 0 where 1 = 1");
+    	statement.executeUpdate("update word set updated = 0 where `doc_id` = '"+doc_id+"'");
     }
     public static void InsWords(Map<Pair<String,Integer>, Pair<String,Pair<String,Integer>>> words,long DocID,long docSize) throws Exception
     { 
