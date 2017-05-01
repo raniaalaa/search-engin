@@ -66,14 +66,19 @@ public class MAIN extends TimerTask {
         {
              String FileName=st[i].getName().replace(".html","");
              doc_id=Long.parseLong(FileName);
+             
              try {
 				Importance = filer.Dealing_Files(st[i]);
 			} catch (IOException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
             try {
 				I.Run(FILER.GetText(),doc_id,Importance);
+				DATABASE.InsTitle(Importance[0],doc_id);
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -118,7 +123,7 @@ class MAINAPP
         Calendar date = Calendar.getInstance();
         date.set(
                 Calendar.DAY_OF_WEEK,
-                Calendar.SUNDAY
+                Calendar.MONDAY
         );
         date.set(Calendar.HOUR, 0);
         date.set(Calendar.MINUTE, 0);

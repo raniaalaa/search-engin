@@ -95,7 +95,7 @@ public class DATABASE {
             url=Normalize(url);
             if(url.equals(""))
                 return;
-            String sql="INSERT INTO `record`(`ID`, `URL`, `document`,  `Visted`, `file`, `invalid`) VALUES (NULL,'"+url+"','"+text+"','0','0','0');";
+            String sql="INSERT INTO `record`(`ID`, `URL`, `document`,  `Visted`, `file`, `invalid`,`Title`) VALUES (NULL,'"+url+"','"+text+"','0','0','0',NULL);";
             Statement sta = conn.createStatement();
             sta.execute(sql);
         }
@@ -323,7 +323,13 @@ public class DATABASE {
     	Statement statement=conn.createStatement();
     	statement.executeUpdate("update word set updated = 0 where `doc_id` = '"+doc_id+"'");
     }
-    public static void InsWords(Map<Pair<String,Integer>, Pair<String,Pair<String,Integer>>> words,long DocID,long docSize) throws Exception
+    public static void InsTitle(String title,long doc_id) throws SQLException
+    {
+    	Statement statement=conn.createStatement();
+    	statement.executeUpdate("UPDATE `record` SET `Title`='"+title+"' where ID='"+doc_id+"'");
+    	
+    }
+    public static void InsWords(Map<Pair<String,Integer>, Pair<String,Pair<String,Integer>>> words,long DocID,long docSize,String [] Importants) throws Exception
     { 
         Statement statement=conn.createStatement();
         Pair<String,Integer> Key;     //Key.getLeft()->word , //Key.getRight()->importance 
@@ -332,19 +338,47 @@ public class DATABASE {
         {
         	Key = entry.getKey();             
             Value = entry.getValue();
+            String word=Key.getLeft();
+            int importance=1;
+    		// int wordCount;
+    		 for (String title_element: Importants[0].split("\\P{Alpha}+")) ///If title -> 4
+    			{
+    				if(word.equals(title_element.toLowerCase()))
+    				{
+    					importance+= 3;
+    					
+    				}
+    			}
+    			for (String img_element: Importants[2].split("\\P{Alpha}+"))  ///If image -> 3
+    			{
+    				if(word.equals(img_element.toLowerCase()))
+    				{
+    					importance+= 2;
+    				}
+    			}
+    			for (String header_element: Importants[1].split("\\P{Alpha}+")) ///If header -> 2
+    			{
+    				if(word.equals(header_element.toLowerCase()))
+    				{
+    					importance+= 1;
+    				}
+    			}
             	 if(CheckWordInDoc(Key.getLeft(),DocID))//check if the word was in the document before updating
                  {
      	           		 double TF=(double)Value.getRight().getRight()/docSize;
-     	           	     statement.executeUpdate("UPDATE `word` SET `positions`='"+Value.getLeft()+"',`importance`='"+Key.getRight()+"',`updated`=1,`TF`='"+TF+"' WHERE word='"+Key.getLeft()+"' and doc_id ='"+DocID+"'");
+     	           		 double tf_importance=TF*0.7+importance*0.3;
+     	           	     statement.executeUpdate("UPDATE `word` SET `positions`='"+Value.getLeft()+"',`importance`='"+importance+"',`updated`=1,`TF`='"+tf_importance+"' WHERE word='"+Key.getLeft()+"' and doc_id ='"+DocID+"'");
                  }
             	 else    //the word wasn't in the document
                  {
      	           	 if(!Value.getLeft().equals(""))
      	                {
      	           		    double TF=(double)Value.getRight().getRight()/docSize;
-     		     	        statement.executeUpdate("insert into `word` (`word`,`doc_id`,`positions`,`stemming`,`importance`,`updated`,`TF`) values('"+(String)Key.getLeft()+"','"+DocID+"','"+Value.getLeft()+"','"+Value.getRight()+"','"+(int)Key.getRight()+"',1,'"+TF+"')");
+     	           		    double tf_importance=TF*0.7+importance*0.3;
+     		     	        statement.executeUpdate("insert into `word` (`word`,`doc_id`,`positions`,`stemming`,`importance`,`updated`,`TF`) values('"+(String)Key.getLeft()+"','"+DocID+"','"+Value.getLeft()+"','"+Value.getRight()+"','"+importance+"',1,'"+TF+"')");
      	                }
                  }
+            	 
        }	
  }
     public static String[] getDocs(String Word) throws SQLException
@@ -359,12 +393,7 @@ public class DATABASE {
     	}
     	 String[] Docs = (String[]) l.toArray(new String[l.size()]);
     	return Docs;
-    }
-    
-    
-    
-    
-    
+    }  
     public static void InsExpressions(Map<String, String> expressionsMap) throws Exception
     {
     	PreparedStatement statement;
