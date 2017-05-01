@@ -39,7 +39,7 @@ public class RANKER {
 	
 	 { 
 		double IDF;
-	    IDF=(double)DATABASE.getTotalNumberOfDocs()/(double)DATABASE.getwordDocsCount(Word);
+	    IDF=Math.log10((double)DATABASE.getTotalNumberOfDocs()/(double)DATABASE.getwordDocsCount(Word));
 	    System.out.println("(double)DATABASE.getTotalNumberOfDocs()");
 	    System.out.println((double)DATABASE.getTotalNumberOfDocs());
 	    System.out.println("(double)DATABASE.getwordDocsCount(Word)");
@@ -75,10 +75,6 @@ public static Integer[] Ranking(String word) throws NumberFormatException, SQLEx
     { 
 		int  Key=entry.getKey();
 		double Value=entry.getValue();
-		System.out.println("key");
-		System.out.println(Key);
-		System.out.println("value");
-		System.out.println(Value);
     }
 	Set<Integer> keys = SortedMap.keySet();
 	Integer[] array = keys.toArray(new Integer[keys.size()]);
