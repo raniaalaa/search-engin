@@ -2,9 +2,11 @@ import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.sql.Statement;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.io.IOException;
@@ -23,8 +25,11 @@ public class CRAWLER implements Runnable{
     int number;
         public CRAWLER( int n,boolean restart) throws SQLException, MalformedURLException ,IOException{ // mythread=t;
 
+           
 
         urlarray=new ArrayList<String>();
+        
+       
         urlarray.add("https://en.wikipedia.org/wiki/main_Page");
         urlarray.add("https://answers.yahoo.com");
         urlarray.add("http://stackoverflow.com");
@@ -32,7 +37,6 @@ public class CRAWLER implements Runnable{
         urlarray.add("http://www.imdb.com");
         urlarray.add("http://www.wikihow.com");
         urlarray.add("https://opensource.org");
-        urlarray.add("https://www.pinterest.com");
         urlarray.add("http://marketwatch.com");
         urlarray.add("http://www.carmagazine.co.uk");
         urlarray.add("http://www.bbc.com");
@@ -43,17 +47,22 @@ public class CRAWLER implements Runnable{
         urlarray.add("http://www.mti.edu.eg");
         urlarray.add("https://w3.org");
         urlarray.add("http://nature.com/index.html");
+        urlarray.add("https://www.pinterest.com");
         urlarray.add("http://ibm.com/us-en");
         urlarray.add("https://www.microsoft.com");
         urlarray.add("https://dailytekk.com/");
+
         if(restart)
         {
             db.Restart(urlarray);
 
         for(int i=0;i<urlarray.size();i++)
           {
+
+
            String url=db.Normalize(urlarray.get(i));
             try{doc = Jsoup.connect(url).timeout(3000).userAgent(useragent).get();
+
             }
         catch (IOException e)
             {
@@ -63,7 +72,9 @@ public class CRAWLER implements Runnable{
         boolean flag3=IsHTML(doc.html());
         boolean f1=doc.html().equals("");
         if(!f1&&flag3)
-            {   DoNotCrawl(url, url);
+            {   
+         	 DoNotCrawl(url, url);
+         	 db.Insert("",url,0, "");
                 db.UpdateDoc(url,doc.html());
             }
           }
@@ -192,7 +203,7 @@ public class CRAWLER implements Runnable{
 
         org.jsoup.select.Elements links=doc.select("a[href]");
 
-
+        int OutLinks=links.size();
         boolean flagrobot,flagexist=false;
         for(Element e: links)
 
@@ -201,7 +212,13 @@ public class CRAWLER implements Runnable{
             flagrobot=CheckRobotDisallow(tmpurl);
             flagexist = db.Check_Exist(tmpurl);
             if(!flagexist)
+            {
+            	if(!url.equals(tmpurl))
+            	{
+            		db.update_rank(url,tmpurl,OutLinks);
+            	}
                 continue;
+            }
 
             if(flagrobot) {
 
@@ -209,7 +226,10 @@ public class CRAWLER implements Runnable{
                     doc1 = Jsoup.connect(tmpurl).timeout(3000).userAgent(useragent).get();
                     flagexist = db.Check_Exist(tmpurl);
                  if(!flagexist)
+                 {
+                	 db.update_rank(url,tmpurl,OutLinks);
                      continue;
+                 }
                 else if (flagexist){
 
 
@@ -218,7 +238,7 @@ public class CRAWLER implements Runnable{
                 if (flagrobot && flagexist )
                 { try{
 
-                        db.Insert(tmpurl, "");
+                        db.Insert(url,tmpurl,OutLinks, "");
                     }
                   catch (IOException e1)
                     {
@@ -254,7 +274,7 @@ public class CRAWLER implements Runnable{
         } catch (SQLException e1) {
 
         }
-        while(count<5000){
+        while(count<20){
             try {
                 {synchronized(db){
                     currentUrl = db.GetURL(number,id);
