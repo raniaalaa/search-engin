@@ -10,9 +10,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
 import org.apache.commons.lang3.tuple.Pair;
 
 //import org.apache.commons.lang3.Pair;
+
+
 
 import java.io.FileWriter;
 import java.net.MalformedURLException;
@@ -24,7 +27,7 @@ public class DATABASE {
     public DATABASE() {
         try {
             Class.forName("com.mysql.jdbc.Driver");
-            String url = "jdbc:mysql://localhost:3306/searchengine";
+            String url = "jdbc:mysql://localhost:3306/searchengineph2";
             conn = DriverManager.getConnection(url, "root", "");
             System.out.println("conn built");
         } catch (SQLException e) {
@@ -86,21 +89,52 @@ public class DATABASE {
             return false;
         }
     }
-    public synchronized void Insert(String url,String text) throws SQLException, MalformedURLException {
-        int iid=Integer.parseInt(Thread.currentThread().getName());
-        boolean check=Check_Exist(url);
-        if(check)
-        { if(url.equals(""))
+    public synchronized void Insert(String Src,String url,int OutLinks,String text) throws SQLException, MalformedURLException {
+        //  int iid=Integer.parseInt(Thread.currentThread().getName());
+
+      	boolean check=Check_Exist(url);
+          if(check)
+          { 
+          	if(url.equals(""))
+                  return;
+              url=Normalize(url);
+              if(url.equals(""))
+                  return;
+              double NewRank=0.15;
+              if(!Src.equals(""))
+              	NewRank+=((0.85*GetRank(Src))/OutLinks);
+
+              String sql="INSERT INTO `record`(`ID`, `URL`, `document`,  `Visted`, `file`, `invalid` , `rank`) VALUES (NULL,'"+url+"','"+text+"','0','0','0',"+NewRank+");";
+              Statement sta = conn.createStatement();
+              sta.execute(sql);
+          }
+      }
+    
+    public synchronized void update_rank(String urlOutLink,String urlInlink,int OutLinks) throws SQLException, MalformedURLException {
+        
+        if(urlInlink.equals(""))
                 return;
-            url=Normalize(url);
-            if(url.equals(""))
+        urlInlink=Normalize(urlInlink);
+            if(urlInlink.equals(""))
                 return;
-            String sql="INSERT INTO `record`(`ID`, `URL`, `document`,  `Visted`, `file`, `invalid`,`Title`) VALUES (NULL,'"+url+"','"+text+"','0','0','0',NULL);";
+            double NewRank=(GetRank(urlInlink)+((0.85*GetRank(urlOutLink))/OutLinks));
+         //  System.out.println(urlOutLink+" : "+OutLinks+"  "+GetRank(urlInlink)+" "+urlInlink+"  "+NewRank);
+       	 String sql="UPDATE `record` SET `rank`= "+NewRank+" WHERE URL ='"+urlInlink+"'";
             Statement sta = conn.createStatement();
             sta.execute(sql);
-        }
-    }
+  }
+  public  synchronized double GetRank(String url) throws SQLException {
 
+      String sql="SELECT rank FROM `record` WHERE url='"+url+"'";
+      Statement sta = conn.createStatement();
+      ResultSet rs = sta.executeQuery(sql);
+      double value=0;
+      if (rs.next()) {
+          value= Double.parseDouble(rs.getString(1));
+
+      }
+      return value;
+  }
     public synchronized void UpdateVisted(String url) throws SQLException, MalformedURLException {
         String sql="UPDATE `record` SET `Visted`=1 WHERE URL ='"+url+"'";
         Statement sta = conn.createStatement();
