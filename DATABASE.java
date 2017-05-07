@@ -1,3 +1,4 @@
+package Project;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -428,24 +429,24 @@ public class DATABASE {
     	 String[] Docs = (String[]) l.toArray(new String[l.size()]);
     	return Docs;
     }  
-    public static void InsExpressions(Map<String, String> expressionsMap) throws Exception
+    public static void InsExpressions(Map<String, Pair<Integer,Integer>> expressionsMap,long doc_id) throws Exception
     {
     	PreparedStatement statement;
-    	for (Entry<String, String> entry: expressionsMap.entrySet())
+    	for (Entry<String, Pair<Integer,Integer>> entry: expressionsMap.entrySet())
 	    { 
     		String Key=entry.getKey();
-    		String Value=entry.getValue();
-    			if(CheckExpressionCountExistance(Key)) //expression is in the table of expressionscount
+    		Pair<Integer,Integer> Value=entry.getValue();
+    		/*	if(CheckExpressionCountExistance(Key)) //expression is in the table of expressionscount
         		{
         			statement = conn.prepareStatement("UPDATE `expressionscounts` SET `E_Details`='"+Value+"' WHERE Expression='"+Key+"'");
               	    statement.execute();
         		}	
         		else   //expression is not in the table of expressionscount
-        		{
+        		{*/
 
-               	 statement = conn.prepareStatement("insert into `expressionscounts` (`Expression`,`E_Details`) values('"+Key+"','"+Value+"')");
+               	 statement = conn.prepareStatement("insert into `expressionscounts` (`Expression`,`DocID`,`Importance`,`Count`) values('"+Key+"',"+doc_id+","+Value.getLeft()+","+Value.getRight()+")");
                	 statement.execute();
-        		}	
+        		//}	
 	    }
     	
     }
@@ -471,4 +472,39 @@ public class DATABASE {
          }
          return value;	
     } 
+    public static ResultSet QueryProcessor(String w) throws SQLException 
+    {
+    	PreparedStatement st = conn.prepareStatement("SELECT Doc_id FROM record, word WHERE word.doc_id = record.id and word='" + w + "'");
+        ResultSet resultSet = st.executeQuery();	
+        return resultSet;
+    }
+      public static String getDocTitle(int doc_id) throws SQLException
+    {
+        String sql="SELECT Title FROM record where ID='"+doc_id+"'";
+        Statement sta = conn.createStatement();
+        String value="";
+
+        ResultSet resultSet=sta.executeQuery(sql);
+
+        if (resultSet.next()) {
+            value = resultSet.getString(1);
+        }
+
+        return value;
+    }
+       public static String getUrl(int doc_id) throws SQLException
+    {
+        String sql="SELECT url FROM record where ID='"+doc_id+"'";
+        Statement sta = conn.createStatement();
+        String value="";
+
+        ResultSet resultSet=sta.executeQuery(sql);
+
+        if (resultSet.next()) {
+            value = resultSet.getString(1);
+        }
+
+        return value;
+    }
 }
+
