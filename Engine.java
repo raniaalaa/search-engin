@@ -8,6 +8,7 @@ package Project;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.ServletException;
@@ -36,36 +37,76 @@ public class Engine extends HttpServlet {
             throws ServletException, IOException, SQLException, Exception {
       
         
-        try (PrintWriter out = response.getWriter()) {
+            try (PrintWriter out = response.getWriter()) {
             response.setContentType("text/html;charset=UTF-8");
-          out.println("<!DOCTYPE html>");
+            out.println("<!DOCTYPE html>");
             out.println("<html>");
             out.println("<head><link rel=\"stylesheet\" type=\"text/css\" href=\"css/resCss.css\">\n");
             out.println("<title>Servlet Engine</title>");            
             out.println("</head>");
             String query;
             query = request.getParameter("query");
+            query=query.toLowerCase();
             //String s=RANKER.temp(query);
+            FILER f=new FILER();
             DATABASE d=new DATABASE();
-            int w=d.GetImportance(query,38);
-            Long[] Docs=RANKER.Ranking(query);
-			for(int i=0;i<Docs.length;i++)
+            PARSER p=new PARSER();
+            String [] Words= p.Parse(query);
+            ArrayList<Long> docsList=p.GetIntersection();
+            Long[] Docs = new Long[docsList.size()];
+            Docs = docsList.toArray(Docs);
+            Long[] Sorteddocs=RANKER.Ranking(Docs,Words);
+			/*for(int i=0;i<Docs.length;i++)
 			{
-			    System.out.println(d.getDocTitle(Docs[i]));	
+			    System.out.println(d.getDocTitle(Sorteddocs[i]));	
                             System.out.println(Docs[i]);
-                            System.out.println(d.getUrl(Docs[i]));
-			}
-                        for (int i =0; i<Docs.length;++i){
-                    
-               out.println(
-                "<li style=\"list-style-type:none\">\n"
-                + "<div>\n" +
-                "<p color=\"blue\">"+d.getDocTitle(Docs[i])+"<br>\n" +
-                "<a href=\""+d.getUrl(Docs[i])+"\" style=\"color:\"blue\">" +
-                        //results.get(i).getUrl()+"</a><br>\n" +
-               // "<span style=\" color:#808080\">"+results.get(i).getDescp()+"</p>\n" +
-                "</div></li>\n"); 
+                            System.out.println(d.getUrl(Sorteddocs[i]));
+			}*/
+                        if(Sorteddocs.length==0)
+                        {
+                            out.println("<p>Sorry, Your query is not found</p>"); /////azabt l html bta3ha
+                            
                         }
+                        for (int i =0; i<Docs.length;++i)
+                        {
+                            out.println( "<li style=\"list-style-type:none\">\n"
+                            + "<div>\n" 
+                                    //+"<p color=\"blue\">"+d.getDocTitle(Docs[i])+"<br>\n"
+                                    +
+                             "<a href=\""+d.getUrl(Docs[i])+"\" style=\"color:\"blue\">" +
+                               d.getDocTitle(Docs[i])+"</a><br>\n" +
+                             "<span style=\" color:#808080\">"+f.getDescription(query,Docs[i])+"</p>\n" +
+                             "</div></li>\n");    
+                        }
+                        docsList=p.GetDiff();
+                        Docs = new Long[docsList.size()];
+                        Docs = docsList.toArray(Docs);
+                        Sorteddocs=RANKER.Ranking(Docs,Words);
+			/*for(int i=0;i<Sorteddocs.length;i++)
+			{
+			    System.out.println(d.getDocTitle(Sorteddocs[i]));	
+                            System.out.println(Docs[i]);
+                            System.out.println(d.getUrl(Sorteddocs[i]));
+			}*/
+                        
+                        for (int i =0; i<Sorteddocs.length;++i)
+                        {
+                            //3ashan a3ml l kalam elly fel query bold////////////
+                            ///////////*use <strong> or <b> tag also, you can try with css <span style="font-weight:bold">text</span> *///////////
+
+                            out.println( "<li style=\"list-style-type:none\">\n"
+                            + "<div>\n" +
+                             "<p color=\"blue\">"+d.getDocTitle(Docs[i])+"<br>\n" +
+                             "<a href=\""+d.getUrl(Docs[i])+"\" style=\"color:\"blue\">" +
+                               d.getUrl(Docs[i])+"</a><br>\n" +
+                             "<span style=\" color:#808080\">"+f.getDescription(query,Docs[i])+"</p>\n" +
+                             "</div></li>\n");    
+                        }
+                        ////////////getDescription hyb2a liha handla tanya m3 elly homa msh phrase/////////////
+                       //  System.out.println(f.getDescription("menna",12));
+               
+               
+             
             /* TODO output your page here. You may use following sample code. */
             
             out.println("<body>");

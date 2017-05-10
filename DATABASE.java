@@ -28,7 +28,7 @@ public class DATABASE {
     public DATABASE() {
         try {
             Class.forName("com.mysql.jdbc.Driver");
-            String url = "jdbc:mysql://localhost:3306/searchengineph2";
+            String url = "jdbc:mysql://localhost:3306/searchengine";
             conn = DriverManager.getConnection(url, "root", "");
             System.out.println("conn built");
         } catch (SQLException e) {
@@ -90,7 +90,7 @@ public class DATABASE {
             return false;
         }
     }
-    public synchronized void Insert(String Src,String url,int OutLinks,String text) throws SQLException, MalformedURLException {
+    public synchronized void Insert(long Src,String url,int OutLinks,String text) throws SQLException, MalformedURLException {
         //  int iid=Integer.parseInt(Thread.currentThread().getName());
 
       	boolean check=Check_Exist(url);
@@ -102,8 +102,8 @@ public class DATABASE {
               if(url.equals(""))
                   return;
               double NewRank=0.15;
-              if(!Src.equals(""))
-              	NewRank+=((0.85*GetRank(Src))/OutLinks);
+             // if(!Src.equals(""))
+              	NewRank=0.15+((0.85*GetRank(Src))/OutLinks);
 
               String sql="INSERT INTO `record`(`ID`, `URL`, `document`,  `Visted`, `file`, `invalid` , `rank`) VALUES (NULL,'"+url+"','"+text+"','0','0','0',"+NewRank+");";
               Statement sta = conn.createStatement();
@@ -111,22 +111,22 @@ public class DATABASE {
           }
       }
     
-    public synchronized void update_rank(String urlOutLink,String urlInlink,int OutLinks) throws SQLException, MalformedURLException {
+    public synchronized void update_rank(long urlOutLink,long urlInlink,int OutLinks) throws SQLException, MalformedURLException {
         
-        if(urlInlink.equals(""))
+       /* if(urlInlink.equals(""))
                 return;
         urlInlink=Normalize(urlInlink);
             if(urlInlink.equals(""))
-                return;
+                return;*/
             double NewRank=(GetRank(urlInlink)+((0.85*GetRank(urlOutLink))/OutLinks));
          //  System.out.println(urlOutLink+" : "+OutLinks+"  "+GetRank(urlInlink)+" "+urlInlink+"  "+NewRank);
-       	 String sql="UPDATE `record` SET `rank`= "+NewRank+" WHERE URL ='"+urlInlink+"'";
+       	 String sql="UPDATE `record` SET `rank`= "+NewRank+" WHERE ID ='"+urlInlink+"'";
             Statement sta = conn.createStatement();
             sta.execute(sql);
   }
-  public  synchronized double GetRank(String url) throws SQLException {
+  public static double GetRank(long doc_id) throws SQLException {
 
-      String sql="SELECT rank FROM `record` WHERE url='"+url+"'";
+      String sql="SELECT rank FROM `record` WHERE ID='"+doc_id+"'";
       Statement sta = conn.createStatement();
       ResultSet rs = sta.executeQuery(sql);
       double value=0;
@@ -253,8 +253,7 @@ public class DATABASE {
     }
     public static Boolean CheckExpressionInDoc(String Expression,long DocId) throws Exception
     {
-    	long EID=GetExpressionID(Expression); 
-        String queryCheck = "SELECT * from `expressionscounts` WHERE Expression_id = '"+EID+"' and Doc_id = '"+DocId+"'";
+        String queryCheck = "SELECT * from `expressionscounts` WHERE expression = '"+Expression+"' and Doc_id = '"+DocId+"'";
         PreparedStatement statement = conn.prepareStatement(queryCheck);
         ResultSet resultSet = statement.executeQuery();
         return (resultSet.next());
@@ -313,8 +312,10 @@ public class DATABASE {
     }
     public static void DeleteNotUpdated(long DOCID) throws Exception
     {
-    	Statement statement=conn.createStatement();
-    	statement.executeUpdate("DELETE FROM `word` WHERE doc_id = '"+DOCID+"' and updated=0");
+    	Statement statement1=conn.createStatement();
+    	statement1.executeUpdate("DELETE FROM `word` WHERE doc_id = '"+DOCID+"' and updated=0");
+        Statement statement2=conn.createStatement();
+    	statement2.executeUpdate("DELETE FROM `expressionscounts` WHERE doc_id = '"+DOCID+"' and updated=0");
     }
     public static int GetImportance(String Word,long DOCID) throws Exception
     {
@@ -355,8 +356,12 @@ public class DATABASE {
     }
     public static void rstUpdated(long doc_id) throws SQLException
     {
-    	Statement statement=conn.createStatement();
-    	statement.executeUpdate("update word set updated = 0 where `doc_id` = '"+doc_id+"'");
+    	Statement statement1=conn.createStatement();
+    	statement1.executeUpdate("update word set updated = 0 where `doc_id` = '"+doc_id+"'");
+        //////////////////////////
+        Statement statement2=conn.createStatement();
+    	statement2.executeUpdate("update expressionscounts set updated = 0 where `doc_id` = '"+doc_id+"'");
+        
     }
     public static void InsTitle(String title,long doc_id) throws SQLException
     {
@@ -371,7 +376,7 @@ public class DATABASE {
         Pair<String,Pair<String,Integer>> Value;    //Value.getLeft()->position , //Value.getRight().getLeft()->stemming //Value.getRight().getRight()->wordCount
         for (Map.Entry<Pair<String,Integer>, Pair<String,Pair<String,Integer>>> entry: words.entrySet())
         {
-        	Key = entry.getKey();             
+            Key = entry.getKey();             
             Value = entry.getValue();
             String word=Key.getLeft();
             int importance=1;
@@ -416,6 +421,43 @@ public class DATABASE {
             	 
        }	
  }
+    public static void InsExpressions(Map<String, Pair<Integer,Integer>> expressionsMap,long doc_id,String [] Importants,long docSize) throws Exception
+    {
+    	 Statement statement=conn.createStatement();
+    	for (Entry<String, Pair<Integer,Integer>> entry: expressionsMap.entrySet())
+	    { 
+    		String Key=entry.getKey();////////expression
+    		Pair<Integer,Integer> Value=entry.getValue();//////////Value.getLeft()->importance   ////Value.getRight()->count
+                int importance=1;
+                               if(Importants[0].contains(Key))
+    				{
+    					importance+= 3;	
+    				}
+                                if(Importants[1].contains(Key))
+                                {
+                                    importance+= 2;
+                                }
+    			       if(Importants[2].contains(Key))
+		                {
+                                    importance+= 1;
+                                }
+    		               double TF=(double)Value.getRight()/docSize;
+     	           	       double tf_importance=TF*0.7+importance*0.3;
+    		 if(CheckExpressionInDoc(Key,doc_id))//check if the expression was in the document before updating
+                 {
+       	           	       statement.executeUpdate("UPDATE `expressionscounts` SET `tf_importance`='"+tf_importance+"',`updated`=1");
+                 }
+            	 else    //the word wasn't in the document
+                 {
+     	           	 if(!Value.getLeft().equals(""))
+     	                {
+     		     	        statement.executeUpdate("insert into `expressionscounts` (`Expression`,`DocID`,`tf_importance`,`updated`) values('"+Key+"',"+doc_id+","+tf_importance+",1)");
+     	                }
+                 }
+               	 
+	    }
+    	
+    }
     public static String[] getDocs(String Word) throws SQLException
     {
     	List<String> l=new ArrayList();
@@ -428,28 +470,7 @@ public class DATABASE {
     	}
     	 String[] Docs = (String[]) l.toArray(new String[l.size()]);
     	return Docs;
-    }  
-    public static void InsExpressions(Map<String, Pair<Integer,Integer>> expressionsMap,long doc_id) throws Exception
-    {
-    	PreparedStatement statement;
-    	for (Entry<String, Pair<Integer,Integer>> entry: expressionsMap.entrySet())
-	    { 
-    		String Key=entry.getKey();
-    		Pair<Integer,Integer> Value=entry.getValue();
-    		/*	if(CheckExpressionCountExistance(Key)) //expression is in the table of expressionscount
-        		{
-        			statement = conn.prepareStatement("UPDATE `expressionscounts` SET `E_Details`='"+Value+"' WHERE Expression='"+Key+"'");
-              	    statement.execute();
-        		}	
-        		else   //expression is not in the table of expressionscount
-        		{*/
-
-               	 statement = conn.prepareStatement("insert into `expressionscounts` (`Expression`,`DocID`,`Importance`,`Count`) values('"+Key+"',"+doc_id+","+Value.getLeft()+","+Value.getRight()+")");
-               	 statement.execute();
-        		//}	
-	    }
-    	
-    }
+    } 
     public static int getwordDocsCount(String w) throws SQLException
     {
     	PreparedStatement statement = conn.prepareStatement("select count(distinct Doc_id) from word where word='"+w+"'");
@@ -478,7 +499,7 @@ public class DATABASE {
         ResultSet resultSet = st.executeQuery();	
         return resultSet;
     }
-      public static String getDocTitle(int doc_id) throws SQLException
+      public static String getDocTitle(long doc_id) throws SQLException
     {
         String sql="SELECT Title FROM record where ID='"+doc_id+"'";
         Statement sta = conn.createStatement();
@@ -492,7 +513,7 @@ public class DATABASE {
 
         return value;
     }
-       public static String getUrl(int doc_id) throws SQLException
+       public static String getUrl(long doc_id) throws SQLException
     {
         String sql="SELECT url FROM record where ID='"+doc_id+"'";
         Statement sta = conn.createStatement();
