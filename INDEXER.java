@@ -1,44 +1,27 @@
+package Project;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 public class INDEXER {
 static DATABASE db=new DATABASE();
-static Map<String,String> expressionsMap = new HashMap<String,String>(); //Pair.left->l expression,Pair.right->importance,integer->count
+static Map<String,Pair<Integer,Integer>> expressionsMap = new HashMap<String,Pair<Integer,Integer>>(); //Pair.left->l expression,Pair.right->importance,count
 //////////////////////////////////////Stopping Words List///////////////////////////////
 static List<String> stopwords = Arrays.asList( 
-		"a", "about", "above", "above", "across", "after"
-		, "afterwards", "again", "against", "all", "almost", "alone", "along", "already", "also",
-		"although", "always", "am", "among", "amongst", "amoungst", "amount", "an", "and", "another",
-		"any", "anyhow", "anyone", "anything", "anyway", "anywhere", "are", "around", "as", "at", "back",
-		"be", "became", "because", "become", "becomes", "becoming", "been", "before", "beforehand", "behind",
-		"being", "below", "beside", "besides", "between", "beyond", "bill", "both", "bottom", "but", "by", "call",
-		"can", "cannot", "cant", "co", "con", "could", "couldnt", "cry", "de", "describe", "detail", "do", "done",
-		"down", "due", "during", "each", "eg", "eight", "either", "eleven", "else", "elsewhere", "empty", "enough",
-		"etc", "even", "ever", "every", "everyone", "everything", "everywhere", "except", "few", "fifteen", "fify",
-		"fill", "find", "fire", "first", "five", "for", "former", "formerly", "forty", "found", "four", "from", 
-		"front", "full", "further", "get", "give", "go", "had", "has", "hasnt", "have", "he", "hence", "her", "here"
-		, "hereafter", "hereby", "herein", "hereupon", "hers", "herself", "him", "himself", "his", "how", "however",
-		"hundred", "ie", "if", "in", "inc", "indeed", "interest", "into", "is", "it", "its", "itself", "keep", "last",
-		"latter", "latterly", "least", "less", "ltd", "made", "many", "may", "me", "meanwhile", "might", "mill",
-		"mine", "more", "moreover", "most", "mostly", "move", "much", "must", "my", "myself", "name", "namely", 
-		"neither", "never", "nevertheless", "next", "nine", "no", "nobody", "none", "noone", "nor", "not", "nothing",
-		"now", "nowhere", "of", "off", "often", "on", "once", "one", "only", "onto", "or", "other", "others",
-		"otherwise", "our", "ours", "ourselves", "out", "over", "own", "part", "per", "perhaps", "please", 
-		"put", "rather", "re", "same", "see", "seem", "seemed", "seeming", "seems", "serious", "several", "she",
-		"should", "show", "side", "since", "sincere", "six", "sixty", "so","some", "somehow", "someone", "something",
-		"sometime", "sometimes", "somewhere", "still", "such", "system", "take", "ten", "than", "that", "the", "their"
-		, "them", "themselves", "then", "thence", "there", "thereafter", "thereby", "therefore", "therein", "thereupon"
-		, "these", "they", "thickv", "thin", "third", "this", "those", "though", "three", "through", "throughout",
-		"thru","thus", "to", "together", "too", "top", "toward", "towards", "twelve", "twenty", "two", "un", 
-		"under", "until", "up", "upon", "us", "very", "via", "was", "we", "well", "were", "what", "whatever",
-		"when", "whence", "whenever", "where", "whereafter", "whereas", "whereby", "wherein", "whereupon", 
-		"wherever", "whether", "which", "while", "whither", "who", "whoever", "whole", "whom", "whose", "why",
-		"will", "with", "within", "without", "would", "yet", "you", "your", "yours", "yourself", "yourselves",
-		 "terms", "CONDITIONS", "conditions", "values", "interested.", "care",
-		"sure", "contact", "grounds", "buyers", "tried", "said,", 
-		"plan", "value", "principle.", "forces", "sent:", "is,", "was", "like", "discussion", "tmus", "diffrent.", 
-		"layout", "area.", "thanks", "thankyou", "hello", "bye", "rise", "fell", "fall", "psqft.",
-		"http://", "km", "miles");
+		"a", "able", "about",
+			"across", "after", "all", "almost", "also", "am", "among", "an",
+			"and", "any", "are", "as","not", "at", "be", "because", "been", "but",
+			"by", "can", "cannot", "could", "dear", "did", "do", "does",
+			"either", "else", "ever", "every", "for", "from", "get", "got",
+			"had", "has", "have", "he", "her", "hers", "him", "his", "how",
+			"however", "i", "if", "in", "into", "is", "it", "its", "just",
+			"least", "let", "like", "likely", "may", "me", "might", "most",
+			"must", "my", "neither", "no", "nor", "of", "off", "often",
+			"on", "only", "or", "other", "our", "own", "rather", "said", "say",
+			"says", "she", "should", "since", "so", "some", "than", "that",
+			"the", "their", "them", "then", "there", "these", "they", "this",
+			"tis", "to", "too", "twas", "us", "wants", "was", "we", "were",
+			"what", "when", "where", "which", "while", "who", "whom", "why",
+			"will", "with", "would", "yet", "you", "your");
 
 INDEXER()
 {}
@@ -216,34 +199,40 @@ public static String Stemmer(String word)
 				}
 				if(Phrase.length()>1)
 				{
-					int important;
-					String LastCount;
+					int important,count;
+					//String LastCount;
 					Expression=First_Stop_Word+Phrase;
 					important=Expression_Importance(Importants,Expression);
-					String Value="";
+					Pair<Integer,Integer> Value;
 					long LastDoc;
 					if(expressionsMap.containsKey(Expression))   //If this expression is exist in the map
-					{							
-						Value=expressionsMap.get(Expression);
-				        String[] ExPerDoc = Value.split(",");
-				        LastCount=ExPerDoc[ExPerDoc.length-1];
-				        LastDoc=Long.parseLong(ExPerDoc[ExPerDoc.length-3]);
-				     // If this expression is exist in the same file
-				        if(LastDoc==doc_id)
-				        {
-				        	LastCount=Integer.toString((Integer.parseInt(LastCount)+1));
-				        	Value=Value.substring(0,Value.lastIndexOf(','));
-				        	Value=Value+","+LastCount;
-				        }
+					{		
+						//position=words.get(pW).getLeft()+","+Integer.toString(pos);
+						//words.put(pW,Pair.of(position,Pair.of(sw,wordCount)));
+						
+						Value=expressionsMap.get(Expression); //importance,count
+				    //    String[] ExPerDoc = Value.split(",");
+				      //  LastCount=ExPerDoc[ExPerDoc.length-1];
+				     //   LastDoc=Long.parseLong(ExPerDoc[ExPerDoc.length-3]);
+		
+				        // If this expression is exist in the same file
+				     //   if(LastDoc==doc_id)
+				  //      {
+				        	//LastCount=Integer.toString((Integer.parseInt(LastCount)+1));
+				        //	Value=Value.substring(0,Value.lastIndexOf(','));
+				        //	Value=Value+","+LastCount;
+				  //      }
+				        count=(Value.getLeft())+1;
+				        Value=Pair.of(important, count);
 				        //////////////////////If it is the first time in this document
-				        else
-				        {
-					        Value=Value+","+Long.toString(doc_id)+","+Integer.toString(important)+",1";
-				        }
+				  //      else
+				    //    {
+					//        Value=Value+","+Long.toString(doc_id)+","+Integer.toString(important)+",1";
+				      //  }
 					}
 					else                                //If this the first time for this expression
 					{
-						Value=Long.toString(doc_id)+","+Integer.toString(important)+",1";
+						Value=Pair.of(important, 1);
 					}
 					if(!Expression.equals(""))
 						expressionsMap.put(Expression,Value);   
@@ -252,14 +241,11 @@ public static String Stemmer(String word)
 					Phrase="";	
 			}		
 	   }
-	   DATABASE.InsWords(words,doc_id,docSize,Importants);                    // Insert the words into the database 
+	   DATABASE.InsWords(words,doc_id,docSize,Importants); // Insert the words into the database 
+	   DATABASE.InsExpressions(expressionsMap,doc_id,Importants,docSize);   // Insert the expressions into the database
 	   DATABASE.DeleteNotUpdated(doc_id);
 	   words.clear();
-
- }
- public static void InsEx() throws Exception
- {
- 	DATABASE.InsExpressions(expressionsMap);   // Insert the expressions into the database
+	   expressionsMap.clear();
  }
 }
 
