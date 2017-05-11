@@ -369,14 +369,14 @@ public class DATABASE {
     	statement.executeUpdate("UPDATE `record` SET `Title`='"+title+"' where ID='"+doc_id+"'");
     	
     }
-    public static void InsWords(Map<Pair<String,Integer>, Pair<String,Pair<String,Integer>>> words,long DocID,long docSize,String [] Importants) throws Exception
+      public static void InsWords(Map<Pair<String,Integer>, Pair<String,Pair<String,Integer>>> words,long DocID,long docSize,String [] Importants) throws Exception
     { 
         Statement statement=conn.createStatement();
         Pair<String,Integer> Key;     //Key.getLeft()->word , //Key.getRight()->importance 
         Pair<String,Pair<String,Integer>> Value;    //Value.getLeft()->position , //Value.getRight().getLeft()->stemming //Value.getRight().getRight()->wordCount
         for (Map.Entry<Pair<String,Integer>, Pair<String,Pair<String,Integer>>> entry: words.entrySet())
         {
-            Key = entry.getKey();             
+        	Key = entry.getKey();             
             Value = entry.getValue();
             String word=Key.getLeft();
             int importance=1;
@@ -407,7 +407,7 @@ public class DATABASE {
                  {
      	           		 double TF=(double)Value.getRight().getRight()/docSize;
      	           		 double tf_importance=TF*0.7+importance*0.3;
-     	           	     statement.executeUpdate("UPDATE `word` SET `positions`='"+Value.getLeft()+"',`importance`='"+importance+"',`updated`=1,`TF`='"+tf_importance+"' WHERE word='"+Key.getLeft()+"' and doc_id ='"+DocID+"'");
+     	           	     statement.executeUpdate("UPDATE `word` SET `importance`='"+importance+"',`updated`=1,`TF`='"+tf_importance+"' WHERE word='"+Key.getLeft()+"' and doc_id ='"+DocID+"'");
                  }
             	 else    //the word wasn't in the document
                  {
@@ -415,7 +415,7 @@ public class DATABASE {
      	                {
      	           		    double TF=(double)Value.getRight().getRight()/docSize;
      	           		    double tf_importance=TF*0.7+importance*0.3;
-     		     	        statement.executeUpdate("insert into `word` (`word`,`doc_id`,`positions`,`stemming`,`importance`,`updated`,`TF`) values('"+(String)Key.getLeft()+"','"+DocID+"','"+Value.getLeft()+"','"+Value.getRight()+"','"+importance+"',1,'"+TF+"')");
+     		     	        statement.executeUpdate("insert into `word` (`word`,`doc_id`,`stemming`,`importance`,`updated`,`TF`) values('"+(String)Key.getLeft()+"','"+DocID+"','"+Value.getRight().getLeft()+"','"+importance+"',1,'"+TF+"')");
      	                }
                  }
             	 
