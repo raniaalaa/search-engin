@@ -13,17 +13,9 @@
         <title>Search</title>
     </head>
     <body  >
-        <!--background="images/1.jpg"-->
          <img id="img" src="images/search.jpg" width="400" height="190" alt="search">
-         
-         <!--div class="button_box2"-->
-         <!--form id="box" action="Engine" class="form-wrapper-2 cf" method="POST"-->
            <form id="box" action="Engine"  method="POST">   
             <input id="textbox" type="text" name="query"  placeholder="Search here..." />
-            <!--value="Search here..."-->
-            <!--input placeholder="Search here..." autocomplete ="off" required-->
-            <!--input type="submit" value="Go" name="GO" /--!>
         </form>
-              <!--/div-->
     </body>
 </html>
