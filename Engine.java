@@ -23,7 +23,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 @WebServlet(name = "Engine", urlPatterns = {"/Engine"})
 public class Engine extends HttpServlet {
-
+     //boolean phrase;
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
      * methods.
@@ -35,19 +35,26 @@ public class Engine extends HttpServlet {
      */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException, SQLException, Exception {
-      
-        
             try (PrintWriter out = response.getWriter()) {
             response.setContentType("text/html;charset=UTF-8");
             out.println("<!DOCTYPE html>");
             out.println("<html>");
-            out.println("<head><link rel=\"stylesheet\" type=\"text/css\" href=\"css/resCss.css\">\n");
-            out.println("<title>Servlet Engine</title>");            
-            out.println("</head>");
+            out.println("<head>");
+            out.println("<link rel=\"stylesheet\" type=\"text/css\" href=\"css/newcss.css\">\n");
             String query;
             query = request.getParameter("query");
+            out.println("<title>"+query+" - Search</title>");            
+            out.println("</head>");
+            out.println("<body >");
+            out.println("<div id=\"res\" > "); 
+            out.println("<a href=\"http://localhost:8080/Search/\"> "); 
+            out.println("<img src=\"images/transparent.png\" width=\"150\" height=\"90\" alt=\"search\">");
+            out.println("</a>");
+            out.println("<form action=\"Engine\"  method=\"POST\" >"); 
+            out.println("<input  id=\"restextbox\" type=\"text\" name=\"query\"  placeholder=\"Search here...\" /> </div>");
             query=query.toLowerCase();
-            //String s=RANKER.temp(query);
+            System.out.println(query);
+            
             FILER f=new FILER();
             DATABASE d=new DATABASE();
             PARSER p=new PARSER();
@@ -56,60 +63,43 @@ public class Engine extends HttpServlet {
             Long[] Docs = new Long[docsList.size()];
             Docs = docsList.toArray(Docs);
             Long[] Sorteddocs=RANKER.Ranking(Docs,Words);
-			/*for(int i=0;i<Docs.length;i++)
-			{
-			    System.out.println(d.getDocTitle(Sorteddocs[i]));	
-                            System.out.println(Docs[i]);
-                            System.out.println(d.getUrl(Sorteddocs[i]));
-			}*/
                         if(Sorteddocs.length==0)
                         {
-                            out.println("<p>Sorry, Your query is not found</p>"); /////azabt l html bta3ha
-                            
+                            out.println("<p style=\"margin: 2cm 4cm 3cm 10cm; color:#CADCDC; font-size: 40px;\"> <b>Sorry, Your query is not found</b></p>"); /////azabt l html bta3ha
+                         
                         }
                         for (int i =0; i<Docs.length;++i)
                         {
                             out.println( "<li style=\"list-style-type:none\">\n"
-                            + "<div>\n" 
-                                    //+"<p color=\"blue\">"+d.getDocTitle(Docs[i])+"<br>\n"
+                            + "<div style=\"margin: 1cm 15cm 0.5cm 1.5cm\" >\n" 
                                     +
                              "<a href=\""+d.getUrl(Docs[i])+"\" style=\"color:\"blue\">" +
-                               d.getDocTitle(Docs[i])+"</a><br>\n" +
-                             "<span style=\" color:#808080\">"+f.getDescription(query,Docs[i])+"</p>\n" +
+                               d.getDocTitle(Docs[i])+"</a><br>\n" + 
+                             "<span style=\" color:#CAD3D3\">"+f.getDescription(query,Docs[i])+"\n" +
                              "</div></li>\n");    
+                        //style=\" color:#808080\"
+                        //BFD3D3  
                         }
                         docsList=p.GetDiff();
                         Docs = new Long[docsList.size()];
                         Docs = docsList.toArray(Docs);
                         Sorteddocs=RANKER.Ranking(Docs,Words);
-			/*for(int i=0;i<Sorteddocs.length;i++)
-			{
-			    System.out.println(d.getDocTitle(Sorteddocs[i]));	
-                            System.out.println(Docs[i]);
-                            System.out.println(d.getUrl(Sorteddocs[i]));
-			}*/
-                        
                         for (int i =0; i<Sorteddocs.length;++i)
                         {
                             //3ashan a3ml l kalam elly fel query bold////////////
                             ///////////*use <strong> or <b> tag also, you can try with css <span style="font-weight:bold">text</span> *///////////
 
                             out.println( "<li style=\"list-style-type:none\">\n"
-                            + "<div>\n" +
-                             "<p color=\"blue\">"+d.getDocTitle(Docs[i])+"<br>\n" +
+                            + "<div style=\"margin: 1cm 15cm 0.5cm 1.5cm\" >\n" 
+                                    +
                              "<a href=\""+d.getUrl(Docs[i])+"\" style=\"color:\"blue\">" +
-                               d.getUrl(Docs[i])+"</a><br>\n" +
-                             "<span style=\" color:#808080\">"+f.getDescription(query,Docs[i])+"</p>\n" +
-                             "</div></li>\n");    
+                               d.getDocTitle(Docs[i])+"</a><br>\n" +
+                                      // ++
+                             "<span style=\" color:#CAD3D3\">"+f.getDescription(query,Docs[i])+"\n" +
+                             "</div></li>\n");          
+                        // style=\" color:#808080\"
                         }
-                        ////////////getDescription hyb2a liha handla tanya m3 elly homa msh phrase/////////////
-                       //  System.out.println(f.getDescription("menna",12));
-               
-               
-             
-            /* TODO output your page here. You may use following sample code. */
-            
-            out.println("<body>");
+                        
             out.println("</body>");
             out.println("</html>");
            

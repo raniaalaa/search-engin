@@ -7,22 +7,55 @@ and open the template in the editor.
     Created on : Apr 25, 2017, 1:02:54 PM
     Author     : mennna
 */
-
+html, body {
+    margin: 0;
+    padding: 0;
+}
+#textbox
+{
+    height:30px;
+    width:500px;
+    font-size:14pt;
+}
 #box
 {
 width:1500px;
-position: relative;
-left: 579px;
+left: 450px;
 top:300px;
-/*margin:auto; 
-margin: 0 1.5%;*/
-/*position: fixed; /* or absolute */
-/*top: 40%;
-left: 45%;*/
+position: relative;
 }
 #img
 {
   position: fixed; /* or absolute */
   top: 25%;
-  left: 40%;
+  left: 35%;
+}
+#res
+{
+    background-color:#F3F9F9;
+    height: 100px;
+}
+#res img
+{
+     padding-top: 0.5%;
+     position: fixed;
+}
+#res form
+{
+ margin-left:12%;
+ padding-top: 1.9%;
+ position: relative;
+}
+#restextbox
+{
+    height:30px;
+    width:500px;
+    font-size:14pt;
+    position: relative;
+}
+
+#resimg
+{
+   position: fixed; /* or absolute */
+ 
 }
