@@ -31,22 +31,51 @@ public class FILER {
     	return Text;
     }
     public static String getDescription(String query,long Doc_id) throws FileNotFoundException, IOException
-    {
+    { 
+        boolean phrase;
         String description="";
         String content = "" ;
-        //new Scanner(new File("C:\\Users\\mennna\\Documents\\NetBeansProjects\\Search\\11.html")).useDelimiter("\\Z").next();
         File f=new File("C:\\Users\\mennna\\Documents\\NetBeansProjects\\Search\\"+Doc_id+".html");
         org.jsoup.nodes.Document doc=Jsoup.parse(f, "UTF-8");
         content=content+" "+doc.text();
-        //System.out.println(content);
         content= content.toLowerCase();
-         System.out.println("contenttttttt "+content);
-        //int index = content.indexOf(query);
-               //System.out.println("index "+index);
+                if (query.endsWith("\"")==true && query.startsWith("\"")==true)
+            {
+                phrase=true;
+            }
+                else
+                    phrase=false;
+        int query_length=0;
+       
+        String query_words[] = query.split("\\P{Alpha}+");
+        query_length=query_words.length;
         String words[] = content.split("\\P{Alpha}+");
-       int index = ArrayUtils.indexOf(words, query);
-        System.out.println("lengthhhhhhhhhhhhhhhh"+words.length);
-                int i,start,end;
+        int index = ArrayUtils.indexOf(words, query_words[0]);
+        System.out.println("index "+index);
+        int i=0,start=0,end=0;
+        if(phrase&&query_length>1)
+        {
+            if(index-10<0)
+                    start=0;
+                else
+                    start=index-10;
+                if(index+20>content.length()-1)
+                    end=content.length()-1;
+                else
+                    end=index+20;
+                  for( i=start;i<end;i++)
+                {
+                   if( query.indexOf(words[i]) != -1)
+                { 
+                        description+="<b> "+words[i]+"</b>"; 
+                }
+            else
+                description+=" "+words[i];
+        }
+                
+        }
+        else if(query_length==1)
+        { 
                 if(index-10<0)
                     start=0;
                 else
@@ -55,11 +84,39 @@ public class FILER {
                     end=content.length()-1;
                 else
                     end=index+20;
-                                System.out.println("hereee "+query+" "+Doc_id+" "+index+" "+start+" "+end);
-                for( i=start;i<end;i++)
+                    for( i=start;i<end;i++)
                 {
-                    description+=" "+words[i];
+                    if(words[i].equals(query))
+                     { 
+                        description+="<b> "+words[i]+"</b>";
+                     }
+                    else
+                    { 
+                        description+=" "+words[i];
+                    }
                 } 
+         }
+        else if(!phrase&&query_length>1)
+        { 
+            if(index-10<0)
+                    start=0;
+                else
+                    start=index-10;
+                if(index+20>content.length()-1)
+                    end=content.length()-1;
+                else
+                    end=index+20;
+                  for( i=start;i<end;i++)
+                {
+                   if( query.indexOf(words[i]) != -1)
+                { 
+                        description+="<b> "+words[i]+"</b>"; 
+                }
+            else
+                description+=" "+words[i];
+        }
+        }
+          System.out.println("description  "+description);
                 return description;
     }
     
@@ -73,7 +130,7 @@ public class FILER {
 	        String tag="h";
 	        String All_Headers="";
 		Elements Header;
-	    for(int i=1;i<20;i++) //loop to get text with headers tag of the file
+	        for(int i=1;i<20;i++) //loop to get text with headers tag of the file
 		 {  
 		   tag="h"+String.valueOf(i);
 		   Header = doc.select(tag);
@@ -91,7 +148,7 @@ public class FILER {
 					break;
 				
 		 }
-	     Importants[1]=All_Headers;
+	         Importants[1]=All_Headers;
 		 Text=Text+" "+doc.text();  //get the text of the document
 		 Elements img = doc.getElementsByTag("img"); //get the text with img tag 
 		 for (Element element : img) 
