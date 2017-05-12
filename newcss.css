@@ -38,13 +38,15 @@ position: relative;
 #res img
 {
      padding-top: 0.5%;
-     position: fixed;
+     position: absolute;
 }
 #res form
 {
  margin-left:12%;
- padding-top: 1.9%;
+ padding-top:  1.9%;
  position: relative;
+ /*position: static;*/
+ /*position: absolute;*/
 }
 #restextbox
 {
