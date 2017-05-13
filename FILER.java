@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Project;
+//package Project;
 
 /**
  *
@@ -123,7 +123,7 @@ public class FILER {
 	public static  String [] Dealing_Files(File f) throws IOException  //return array of important strings in the file
 	{ 
 		Text="";
-		String [] Importants={"","",""}; //first element is the title,second is all headers,third is img alt
+		String [] Importants={"","","",""}; //first element is the title,second is all headers,third is img alt,4th is the url
 		org.jsoup.nodes.Document doc=Jsoup.parse(f, "UTF-8");
 		Importants[0]=doc.title(); //get the title of the file
 		//Text=Text+" "+doc.title(); 
