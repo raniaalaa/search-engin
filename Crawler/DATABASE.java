@@ -108,7 +108,7 @@ public class DATABASE {
             if(!Src.equals(""))
                 NewRank+=((0.85*GetRank(Src))/OutLinks);
 
-            String sql="INSERT INTO `record`(`ID`, `URL`,  `Visted`, `file`, `invalid` ,`title`, `rank`,`To_Rank`,`Diff`) VALUES (NULL,'"+url+"','0','0','0','Doc Title',"+NewRank+",'0','0');";
+            String sql="INSERT INTO `record`(`ID`, `URL`,  `Visted`, `file`, `invalid` ,`title`, `rank`,`updated`,`indexed`,`To_Rank`,`Diff`) VALUES (NULL,'"+url+"','0','0','0','Doc Title',"+NewRank+",'0','0','0','0');";
             Statement sta = conn.createStatement();
             sta.execute(sql);
         }
