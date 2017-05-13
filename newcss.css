@@ -7,26 +7,37 @@ and open the template in the editor.
     Created on : Apr 25, 2017, 1:02:54 PM
     Author     : mennna
 */
+.slideshow{
+    z-index: -9999;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 100% !important;
+    margin-left: -800px;
+}  
+
 html, body {
     margin: 0;
     padding: 0;
+    overflow-x:hidden;
 }
 #textbox
 {
     height:30px;
     width:500px;
     font-size:14pt;
+     position: absolute;
 }
 #box
 {
 width:1500px;
 left: 450px;
 top:300px;
-position: relative;
+position: absolute;
 }
 #img
 {
-  position: fixed; /* or absolute */
+  position: absolute; /* or absolute */
   top: 25%;
   left: 35%;
 }
@@ -56,8 +67,4 @@ position: relative;
     position: relative;
 }
 
-#resimg
-{
-   position: fixed; /* or absolute */
- 
-}
+
