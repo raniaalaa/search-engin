@@ -63,11 +63,7 @@ public class Engine extends HttpServlet {
             Long[] Docs = new Long[docsList.size()];
             Docs = docsList.toArray(Docs);
             Long[] Sorteddocs=RANKER.Ranking(Docs,Words);
-                        if(Sorteddocs.length==0)
-                        {
-                            out.println("<p style=\"margin: 2cm 4cm 3cm 10cm; color:#CADCDC; font-size: 40px;\"> <b>Sorry, Your query is not found</b></p>"); /////azabt l html bta3ha
-                         
-                        }
+                        
                         for (int i =0; i<Docs.length;++i)
                         {
                             out.println( "<li style=\"list-style-type:none\">\n"
@@ -81,6 +77,11 @@ public class Engine extends HttpServlet {
                         //BFD3D3  
                         }
                         docsList=p.GetDiff();
+                        if(Sorteddocs.length==0&&docsList.size()==0)
+                        {
+                            out.println("<p style=\"margin: 2cm 4cm 3cm 10cm; color:#CADCDC; font-size: 40px;\"> <b>Sorry, Your query is not found</b></p>"); /////azabt l html bta3ha
+                         
+                        }
                         Docs = new Long[docsList.size()];
                         Docs = docsList.toArray(Docs);
                         Sorteddocs=RANKER.Ranking(Docs,Words);
